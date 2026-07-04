@@ -1,0 +1,117 @@
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Inter:wght@400;500;600&display=swap');
+
+/* ── ТОКЕНЫ ── */
+:root {
+  --bg:        #050505;
+  --bg2:       #0d0d0d;
+  --bg3:       #151515;
+  --border:    #222;
+  --border2:   #333;
+  --accent:    #ea580c;
+  --accent2:   #fb923c;
+  --text:      #ffffff;
+  --text2:     #aaaaaa;
+  --text3:     #555555;
+  --success:   #22c55e;
+  --danger:    #ef4444;
+
+  --font-display: 'Rajdhani', sans-serif;
+  --font-mono:    'Share Tech Mono', monospace;
+  --font-body:    'Inter', sans-serif;
+
+  --radius:    4px;
+  --radius-lg: 8px;
+}
+
+/* ── RESET ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body, #root { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── ТИПОГРАФИКА ── */
+.display { font-family: var(--font-display); }
+.mono    { font-family: var(--font-mono); }
+
+/* ── GRID-ФОНЫ ── */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* ── КНОПКИ ── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 8px; padding: 12px 28px; border: none; cursor: pointer;
+  font-family: var(--font-display); font-size: 18px; font-weight: 700;
+  letter-spacing: 0.05em; text-transform: uppercase;
+  transition: all 0.15s; outline: none;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+}
+.btn-primary {
+  background: var(--accent); color: #fff;
+}
+.btn-primary:hover { background: var(--accent2); }
+.btn-ghost {
+  background: transparent; color: var(--text2);
+  border: 1px solid var(--border2);
+}
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+.btn-danger {
+  background: var(--danger); color: #fff;
+}
+.btn-success {
+  background: var(--success); color: #fff;
+}
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── КАРТОЧКИ ── */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  padding: 20px 24px;
+}
+
+/* ── АКЦЕНТНАЯ ЛИНИЯ ── */
+.accent-line {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+
+/* ── СКАНЛАЙН-АНИМАЦИЯ ── */
+@keyframes scanpulse { 0%,100% { opacity: 0.3; } 50% { opacity: 1; } }
+.scan { animation: scanpulse 2s ease-in-out infinite; }
+
+/* ── ТАЙМЕР ── */
+@keyframes timerTick {
+  0% { color: var(--text); }
+  80% { color: var(--text); }
+  100% { color: var(--danger); }
+}
+
+/* ── FADE IN ── */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.fade-in { animation: fadeIn 0.3s ease forwards; }
+
+/* ── УТИЛИТЫ ── */
+.flex-center { display: flex; align-items: center; justify-content: center; }
+.flex-col    { display: flex; flex-direction: column; }
+.gap-sm { gap: 8px; }
+.gap-md { gap: 16px; }
+.gap-lg { gap: 24px; }
+.full-screen { min-height: 100vh; width: 100%; }
+.text-accent { color: var(--accent); }
+.text-muted  { color: var(--text2); }
+.text-dim    { color: var(--text3); }
+.mono-tag {
+  font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 0.2em;
+  color: var(--accent); text-transform: uppercase;
+}
