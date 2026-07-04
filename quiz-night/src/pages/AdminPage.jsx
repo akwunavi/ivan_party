@@ -52,7 +52,18 @@ function AdminPanel() {
     <div style={{ minHeight: '100vh', background: '#050505', color: '#fff', display: 'flex', flexDirection: 'column', fontFamily: 'Inter, sans-serif' }}>
       <div style={A.header}>
         <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 20, fontWeight: 700, color: '#ea580c' }}>ВЕДУЩИЙ</div>
-        <div style={A.headerMeta}>R{round} · {gameState.status} · шаг {gameState.current_step + 1}</div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <a href="./" target="_blank" rel="noreferrer" style={A.linkBtn}>ПРОЕКТОР ↗</a>
+          <button onClick={() => {
+            const url = `${window.location.origin}${window.location.pathname}#/player`
+            navigator.clipboard?.writeText(url)
+          }} style={A.linkBtn}>
+            ССЫЛКА ИГРОКАМ
+          </button>
+        </div>
+      </div>
+      <div style={{ ...A.headerMeta, padding: '4px 16px', background: '#0a0a0a' }}>
+        R{round} · {gameState.status} · шаг {gameState.current_step + 1}
       </div>
 
       <div style={{ display: 'flex', borderBottom: '1px solid #222' }}>
@@ -377,6 +388,11 @@ const A = {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
   },
   headerMeta: { fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#555' },
+  linkBtn: {
+    padding: '6px 12px', border: '1px solid #333', background: 'transparent',
+    color: '#aaa', textDecoration: 'none', cursor: 'pointer',
+    fontFamily: 'Share Tech Mono, monospace', fontSize: 10, letterSpacing: '0.05em',
+  },
   tab: (active) => ({
     flex: 1, padding: '12px 8px', border: 'none', cursor: 'pointer',
     background: active ? 'rgba(234,88,12,0.1)' : 'transparent',

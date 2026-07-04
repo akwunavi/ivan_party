@@ -1,6 +1,6 @@
 import RoundShell from '../../components/RoundShell'
 
-// ═══ РАУНД 1: КИНО И МУЗЫКА ═══
+// ═══ РАУНД 1: ФИЛЬМЫ И СЕРИАЛЫ ═══
 // Заполняй вопросы здесь. content_type: text | image | multi_image | audio | video
 export const ROUND1 = {
   number: 1,
@@ -10,15 +10,15 @@ export const ROUND1 = {
   hasRepeats: true,            // ← сам включаешь/выключаешь
   autoAdvanceQuestions: false, // вопросы листает ведущий
   rules: [
-    '10 вопросов — текст, картинки, аудио, видео',
+    '10 вопросов как-либо относящихся к фильмам и сериалам',
     'На каждый вопрос 30 секунд',
-    'Ответы вносите на телефоне в течение раунда, финально отправляете после повтора',
+    'Ответы вносите на телефоне в течение раунда, проверяете ответы во время повтора и финально отправляете после',
     'За каждый верный ответ — 1 балл',
   ],
   questions: [
     {
       content_type: 'text',
-      question_text: 'Назовите фильм 2010 года, в котором Леонардо ДиКаприо путешествует по снам',
+      question_text: 'Каст к какому фильму конца 2010-х перед вами?',
       media_urls: [],
       choices: null,
       correct_answer: 'Начало (Inception)',
@@ -26,8 +26,11 @@ export const ROUND1 = {
     {
       content_type: 'image',
       question_text: 'Из какого фильма этот кадр?',
-      media_urls: ['/media/r1/q2.jpg'],
-      correct_answer: '—',
+      media_urls: ['/media/r1.1_1.jpg',
+'/media/r1.1_2.jpg',
+'/media/r1.1_3.jpg'
+'/media/r1.1_4.jpg'],
+      correct_answer: 'Джентельмены',
     },
     {
       content_type: 'audio',
