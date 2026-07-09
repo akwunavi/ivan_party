@@ -138,6 +138,25 @@ export default function Round4({ gameState }) {
             })}
           </div>
         ))}
+        {ROUND4.themes.map((theme, t) => (
+          theme.tiles.map((tile, i) => {
+            const key = `${t}-${i}`
+            const isOpened = opened.includes(key)
+            return (
+              <button key={key} className="jeopardy-tile" onClick={() => openTile(t, i)} disabled={isOpened} style={{
+                gridColumn: t + 1, gridRow: i + 2,
+                cursor: isOpened ? 'default' : 'pointer',
+                border: `1px solid ${isOpened ? '#1a1a1a' : '#333'}`,
+                background: isOpened ? '#0a0a0a' : '#111',
+                color: isOpened ? '#2a2a2a' : '#fff',
+                fontFamily: 'Orbitron, Share Tech Mono, monospace', fontSize: 'clamp(18px, 2.2vw, 32px)', fontWeight: 700,
+                transition: 'all 0.2s',
+              }}>
+                {isOpened ? '·' : tile.value}
+              </button>
+            )
+          })
+        ))}
       </div>
 
       <NavButtons onNext={() => setPhase('scoreboard', 0, { show_scoreboard: true })} nextLabel="ЗАВЕРШИТЬ РАУНД →" />
