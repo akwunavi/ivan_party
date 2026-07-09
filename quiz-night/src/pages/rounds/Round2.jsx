@@ -1,39 +1,26 @@
 import RoundShell from '../../components/RoundShell'
 
-// ═══ РАУНД 2: КАРТИНКИ — 3 БЛОКА × 4 ВОПРОСА ═══
-// У каждого вопроса block_number (1-3). Картинок сколько угодно — сетка сама.
-// Баллы: 0.5 за верный; +1 если все 4 в блоке верны (админка считает сама).
+// ═══ РАУНД 6: РЕБУСЫ ИЗ ДВУХ КАРТИНОК ═══
+// Всегда 2 картинки. Слово = 3 последние буквы первой + 3 первые буквы второй.
+// Пример: КорабЛИК + ВИНоград = ЛИКВИН (условно).
 export const ROUND2 = {
   number: 2,
-  titleLines: ['РАУНД', 'КАРТИНОК'],
-  metaLine: '3 БЛОКА × 4 ВОПРОСА · 30 СЕК · 0.5 БАЛЛА (+1 ЗА БЛОК)',
-  timerSeconds: 30,
-  hasRepeats: false,           // ← включишь если нужно
-  autoAdvanceQuestions: false,
-  blockBonus: 1,
-  pointsPerQuestion: 0.5,
+  titleLines: ['РЕБУСЫ', 'ИЗ КАРТИНОК'],
+  metaLine: '10 ВОПРОСОВ · 60 СЕК · 1 БАЛЛ',
+  timerSeconds: 60,
+  hasRepeats: false,
+  autoAdvanceQuestions: true,
+  useTts: false,   // тут нечего озвучивать — только картинки
   rules: [
-    '3 блока по 4 вопроса, у каждого блока своя тема',
-    'На каждый вопрос 30 секунд',
-    'За верный ответ — 0.5 балла',
-    'Все 4 ответа блока верны — ещё +1 балл',
+    'На экране всегда две картинки',
+    'Составьте слово: 3 последние буквы первого слова + 3 первые буквы второго',
+    'На каждый ребус 60 секунд',
+    'Верный ответ — 1 балл',
   ],
   questions: [
-    // ── БЛОК 1 ──
-    { block_number: 1, block_position: 1, content_type: 'image', question_text: 'Тема блока 1 — вопрос 1', media_urls: ['/media/r2/b1q1.jpg'], correct_answer: '—' },
-    { block_number: 1, block_position: 2, content_type: 'image', question_text: 'Вопрос 2', media_urls: ['/media/r2/b1q2.jpg'], correct_answer: '—' },
-    { block_number: 1, block_position: 3, content_type: 'image', question_text: 'Вопрос 3', media_urls: ['/media/r2/b1q3.jpg'], correct_answer: '—' },
-    { block_number: 1, block_position: 4, content_type: 'image', question_text: 'Вопрос 4', media_urls: ['/media/r2/b1q4.jpg'], correct_answer: '—' },
-    // ── БЛОК 2: ПЕСНИ В КАРТИНКАХ (много картинок на слайде — сетка сама) ──
-    { block_number: 2, block_position: 1, content_type: 'multi_image', question_text: 'Угадай песню по картинкам', media_urls: ['/media/r2/b2q1-1.jpg', '/media/r2/b2q1-2.jpg', '/media/r2/b2q1-3.jpg'], correct_answer: '—' },
-    { block_number: 2, block_position: 2, content_type: 'multi_image', question_text: 'Угадай песню по картинкам', media_urls: [], correct_answer: '—' },
-    { block_number: 2, block_position: 3, content_type: 'multi_image', question_text: 'Угадай песню по картинкам', media_urls: [], correct_answer: '—' },
-    { block_number: 2, block_position: 4, content_type: 'multi_image', question_text: 'Угадай песню по картинкам', media_urls: [], correct_answer: '—' },
-    // ── БЛОК 3 ──
-    { block_number: 3, block_position: 1, content_type: 'image', question_text: 'Тема блока 3 — вопрос 1', media_urls: [], correct_answer: '—' },
-    { block_number: 3, block_position: 2, content_type: 'image', question_text: 'Вопрос 2', media_urls: [], correct_answer: '—' },
-    { block_number: 3, block_position: 3, content_type: 'image', question_text: 'Вопрос 3', media_urls: [], correct_answer: '—' },
-    { block_number: 3, block_position: 4, content_type: 'image', question_text: 'Вопрос 4', media_urls: [], correct_answer: '—' },
+    { content_type: 'multi_image', question_text: '', media_urls: ['/media/r6.1_1.jpg', '/media/r6.1_2.jpg'], word1: 'бланш', word2: 'лагуна', correct_answer: 'Аншлаг' },
+    { content_type: 'multi_image', question_text: '', media_urls: ['/media/r6/q2-1.jpg', '/media/r6/q2-2.jpg'], correct_answer: '—' },
+    // ...добавляй до 10
   ],
 }
 

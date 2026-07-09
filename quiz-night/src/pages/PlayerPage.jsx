@@ -13,15 +13,28 @@ export default function PlayerPage() {
     return saved ? JSON.parse(saved) : null
   })
 
+  // Проверка: если была «Новая игра» и команду удалили — сбрасываем localStorage
+  useEffect(() => {
+    if (!team) return
+    supabase.from('teams').select('id').eq('id', team.id).maybeSingle().then(({ data }) => {
+      if (!data) {
+        localStorage.removeItem('quiz_team')
+        Object.keys(localStorage).filter(k => k.startsWith('quiz_answers_')).forEach(k => localStorage.removeItem(k))
+        setTeam(null)
+      }
+    })
+  }, [team?.id])
+
   if (!team) return <Register onDone={setTeam} />
   if (loading || !gameState) return <Waiting team={team} message="ПОДКЛЮЧЕНИЕ..." />
 
   const { status, current_round } = gameState
 
-  if (status === 'lobby' || current_round === 0) return <Waiting team={team} message="ОЖИДАЕМ НАЧАЛА ИГРЫ" />
+  if (status === 'lobby') return <Waiting team={team} message="ОЖИДАЕМ НАЧАЛА ИГРЫ" />
   if (status === 'scoreboard') return <Waiting team={team} message="ПОДВОДИМ ИТОГИ..." />
+  if (status === 'break') return <Waiting team={team} message="ПЕРЕРЫВ 10 МИНУТ" sub="Разомнись, налей выпить :)" />
   if (status === 'round_intro' || status === 'rules') return <Waiting team={team} message={`РАУНД ${current_round}`} sub="Слушай правила" />
-  if (status === 'show_answers') return <Waiting team={team} message="ПРОВЕРЯЕМ ОТВЕТЫ" />
+  if (status === 'show_answers') return <PlayerReview team={team} gameState={gameState} />
 
   // Во всех «игровых» фазах — форма открыта весь раунд
   if (current_round === 4) return <JeopardyForm key={4} team={team} gameState={gameState} />
@@ -35,9 +48,9 @@ function JeopardyForm({ team, gameState }) {
   const config = ROUND_CONFIGS[4]
   const active = gameState.step_data?.active || null   // "t-i"
   const [text, setText] = useState('')
-  const [sentFor, setSentFor] = useState(null)
+  const [sends, setSends] = useState(0)
 
-  useEffect(() => { setText(''); setSentFor(null) }, [active])
+  useEffect(() => { setText(''); setSends(0) }, [active])
 
   if (!active) return <Waiting team={team} message="РАУНД 4 · СВОЯ ИГРА" sub="Выбирайте плитку — ведущий её запустит" />
 
@@ -46,7 +59,7 @@ function JeopardyForm({ team, gameState }) {
   const tile = theme?.tiles[i]
 
   async function send() {
-    if (!text.trim()) return
+    if (!text.trim() || sends >= 2) return
     await supabase.from('answers').upsert({
       team_id: team.id,
       game_id: gameState.game_id,
@@ -55,7 +68,7 @@ function JeopardyForm({ team, gameState }) {
       answer_text: text.trim(),
       updated_at: new Date().toISOString(),
     }, { onConflict: 'team_id,question_ref' })
-    setSentFor(active)
+    setSends(s => s + 1)
   }
 
   return (
@@ -69,11 +82,12 @@ function JeopardyForm({ team, gameState }) {
           <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 24, fontWeight: 700, color: '#ea580c' }}>{theme?.name}</div>
           <div style={P.mono}>ПЛИТКА · {tile?.value} БАЛЛА</div>
         </div>
-        <textarea value={text} onChange={e => setText(e.target.value)} placeholder="Твой ответ..." rows={2} style={P.textarea} />
-        <button onClick={send} style={{ ...P.primaryBtn, opacity: text.trim() ? 1 : 0.4 }}>
-          {sentFor === active ? '✓ ОТПРАВЛЕНО (МОЖНО ИСПРАВИТЬ)' : 'ОТПРАВИТЬ'}
+        <textarea value={text} onChange={e => setText(e.target.value)} placeholder="Твой ответ..." rows={2}
+          disabled={sends >= 2} style={{ ...P.textarea, opacity: sends >= 2 ? 0.5 : 1 }} />
+        <button onClick={send} disabled={sends >= 2 || !text.trim()} style={P.submitBtn(sends, !text.trim())}>
+          {sends === 0 ? 'ОТПРАВИТЬ' : sends === 1 ? 'ИЗМЕНИТЬ' : '✓ ОТВЕТ ЗАФИКСИРОВАН'}
         </button>
-        <div style={{ ...P.mono, textAlign: 'center', color: '#333' }}>// КТО БЫСТРЕЕ — ВЕДУЩИЙ ВИДИТ ВРЕМЯ</div>
+        <div style={{ ...P.mono, textAlign: 'center', color: '#333' }}>КТО БЫСТРЕЕ — ВЕДУЩИЙ ВИДИТ ВРЕМЯ</div>
       </div>
     </div>
   )
@@ -111,7 +125,9 @@ function AnswerForm({ team, gameState }) {
   // В Р3/Р5 ответ можно поменять один раз: выбор + одно исправление, потом замок.
   function locked(i) {
     if (!collapsible) return false
-    return (state.edits?.[i] ?? 0) >= 1 && state.answers[i] != null
+    // Блокировка зависит ТОЛЬКО от числа исправлений — стирание ответа
+    // не должно снимать лимит (иначе игрок обходит правило «максимум 2 попытки»).
+    return (state.edits?.[i] ?? 0) >= 2
   }
 
   async function push(qIdx, answer, stake) {
@@ -126,11 +142,37 @@ function AnswerForm({ team, gameState }) {
     }, { onConflict: 'team_id,question_ref' })
   }
 
+  // Текст набирается локально; в Supabase уходит только по кнопке.
+  // Кнопка: ОТПРАВИТЬ (1-й раз) → ИЗМЕНИТЬ (2-й раз) → после этого мьют.
+  function typeAnswer(qIdx, text) {
+    setState(s => ({ ...s, answers: { ...s.answers, [qIdx]: text } }))
+  }
+
+  function submitAnswer(qIdx) {
+    const text = state.answers[qIdx]
+    if (!text?.trim()) return
+    setState(s => ({ ...s, edits: { ...s.edits, [qIdx]: (s.edits?.[qIdx] ?? 0) + 1 } }))
+    push(qIdx, text, state.stakes[qIdx] ?? null)
+  }
+
+  // Стереть ответ (Р3/Р5): случайный тап можно отменить.
+  // Пустой ответ в Р3 = пропуск, не ошибка — поэтому послабление безопасно.
+  function clearAnswer(qIdx) {
+    setState(s => {
+      const answers = { ...s.answers }
+      delete answers[qIdx]
+      // Стирание НЕ даёт новую попытку: если лимит исправлений уже исчерпан,
+      // он остаётся исчерпанным — иначе стирание становится обходом лимита.
+      return { ...s, answers }
+    })
+    push(qIdx, null, state.stakes[qIdx] ?? null)
+  }
+
+  // Буквенные варианты (Р3/Р5): выбор шлётся сразу, смена буквы = исправление
   function setAnswer(qIdx, text) {
     setState(s => {
       const had = s.answers[qIdx]
       const edits = { ...s.edits }
-      // считаем исправлением только смену УЖЕ выбранного варианта (для Р3/Р5)
       if (collapsible && had != null && had !== text) edits[qIdx] = (edits[qIdx] ?? 0) + 1
       return { ...s, answers: { ...s.answers, [qIdx]: text }, edits }
     })
@@ -138,19 +180,23 @@ function AnswerForm({ team, gameState }) {
   }
 
   function setStake(qIdx, value) {
+    // П.17: занятая ставка НЕ перетягивается — сначала сними её вручную
+    if (uniqueStakes) {
+      const takenBy = Object.entries(state.stakes).find(([k, v]) => v === value && Number(k) !== qIdx)
+      if (takenBy) return
+    }
+    setState(s => {
+      const stakes = { ...s.stakes, [qIdx]: value }
+      push(qIdx, s.answers[qIdx] ?? null, value)
+      return { ...s, stakes }
+    })
+  }
+
+  function clearStake(qIdx) {
     setState(s => {
       const stakes = { ...s.stakes }
-      if (uniqueStakes) {
-        // эта ставка занята другим вопросом? снять оттуда
-        for (const k of Object.keys(stakes)) {
-          if (stakes[k] === value && Number(k) !== qIdx) {
-            delete stakes[k]
-            push(Number(k), s.answers[k] ?? null, null)
-          }
-        }
-      }
-      stakes[qIdx] = value
-      push(qIdx, s.answers[qIdx] ?? null, value)
+      delete stakes[qIdx]
+      push(qIdx, s.answers[qIdx] ?? null, null)
       return { ...s, stakes }
     })
   }
@@ -167,10 +213,13 @@ function AnswerForm({ team, gameState }) {
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 14px', display: 'flex', flexDirection: 'column', gap: 14 }}>
         {!accepting && (
-          <div style={P.notice}>// СЛУШАЙ ВОПРОСЫ — ОТВЕТЫ МОЖНО ВНОСИТЬ И ПРАВИТЬ ВЕСЬ РАУНД</div>
+          <div style={P.notice}>СЛУШАЙ ВОПРОСЫ — ОТВЕТЫ МОЖНО ВНОСИТЬ И ПРАВИТЬ ВЕСЬ РАУНД</div>
         )}
 
-        {questions.map((q, i) => {
+        {(() => { let num = 0; return questions.map((q, i) => {
+          if (q.block_intro) return null   // интро-слайды блоков — не вопросы
+          num += 1
+          const displayNum = num
           const isUnlocked = unlocked(i)
           const isLocked = locked(i)
           const isOpen = !collapsible || openIdx === i
@@ -184,14 +233,20 @@ function AnswerForm({ team, gameState }) {
                 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: collapsible && isUnlocked ? 'pointer' : 'default' }}
               >
                 <div style={P.qLabel}>
-                  ВОПРОС {i + 1}
+                  ВОПРОС {displayNum}
                   {q.is_final_question && <span style={{ color: '#ea580c' }}> · ТЕМА РАУНДА ×2</span>}
                   {!isUnlocked && <span style={{ color: '#333' }}> · ЕЩЁ НЕ ЗАЧИТАН</span>}
                   {isLocked && <span style={{ color: '#ef4444' }}> · 🔒</span>}
                 </div>
                 {collapsible && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    {state.answers[i] && <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 18, fontWeight: 700, color: '#22c55e' }}>{state.answers[i]}</span>}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                    {state.answers[i] && (
+                      <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 17, fontWeight: 700, color: '#22c55e', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 180 }}>
+                        {state.answers[i]}
+                        {(() => { const ch = q.choices?.find(c => c.key === state.answers[i]); return ch ? ` — ${ch.text}` : '' })()}
+                        {state.stakes[i] != null && <span style={{ color: '#ea580c' }}> · ст.{state.stakes[i]}</span>}
+                      </span>
+                    )}
                     <span style={{ color: '#555', fontSize: 12 }}>{isOpen ? '▲' : '▼'}</span>
                   </div>
                 )}
@@ -204,60 +259,270 @@ function AnswerForm({ team, gameState }) {
                     <div style={{ fontSize: 14, color: '#999', lineHeight: 1.5 }}>{q.question_text}</div>
                   )}
 
-                  {hasChoices ? (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
-                      {(q.choices?.map(c => c.key) || ['А', 'Б', 'В', 'Г']).map(key => (
-                        <button key={key} disabled={isLocked}
-                          onClick={() => !isLocked && setAnswer(i, key)}
-                          style={{ ...P.choiceBtn(state.answers[i] === key), opacity: isLocked && state.answers[i] !== key ? 0.3 : 1 }}>
-                          {key}
+                  {q.match_pairs ? (
+                    <MatchPicker q={q} value={state.answers[i] || ''} locked={isLocked}
+                      onChange={text => setAnswer(i, text)} onClear={() => clearAnswer(i)} />
+                  ) : q.order_answer && q.choices ? (
+                    <OrderPicker q={q} value={state.answers[i] || ''} locked={isLocked}
+                      onChange={text => setAnswer(i, text)} onClear={() => clearAnswer(i)} />
+                  ) : hasChoices ? (
+                    <>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+                        {(q.choices?.map(c => c.key) || ['А', 'Б', 'В', 'Г']).map(key => (
+                          <button key={key} disabled={isLocked}
+                            onClick={() => !isLocked && setAnswer(i, key)}
+                            style={{ ...P.choiceBtn(state.answers[i] === key), opacity: isLocked ? 0.3 : 1 }}>
+                            {key}
+                          </button>
+                        ))}
+                      </div>
+                      {state.answers[i] && (
+                        <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: '#22c55e', letterSpacing: '0.1em' }}>
+                          ✓ ОТВЕТ ОТПРАВЛЕН
+                        </div>
+                      )}
+                      {state.answers[i] && (
+                        <button onClick={() => clearAnswer(i)} style={P.eraseBtn}>
+                          ✕ СТЕРЕТЬ ОТВЕТ
                         </button>
-                      ))}
-                    </div>
+                      )}
+                    </>
                   ) : (
-                    <textarea
-                      value={state.answers[i] || ''}
-                      onChange={e => setAnswer(i, e.target.value)}
-                      placeholder="Твой ответ..."
-                      rows={2}
-                      style={P.textarea}
-                    />
+                    <>
+                      <textarea
+                        value={state.answers[i] || ''}
+                        onChange={e => typeAnswer(i, e.target.value)}
+                        placeholder="Твой ответ..."
+                        rows={2}
+                        disabled={(state.edits?.[i] ?? 0) >= 2}
+                        style={{ ...P.textarea, opacity: (state.edits?.[i] ?? 0) >= 2 ? 0.5 : 1 }}
+                      />
+                      <button
+                        onClick={() => submitAnswer(i)}
+                        disabled={(state.edits?.[i] ?? 0) >= 2 || !state.answers[i]?.trim()}
+                        style={P.submitBtn((state.edits?.[i] ?? 0), !state.answers[i]?.trim())}
+                      >
+                        {(state.edits?.[i] ?? 0) === 0 ? 'ОТПРАВИТЬ'
+                          : (state.edits?.[i] ?? 0) === 1 ? 'ИЗМЕНИТЬ'
+                          : '✓ ОТВЕТ ЗАФИКСИРОВАН'}
+                      </button>
+                    </>
                   )}
 
                   {collapsible && !isLocked && state.answers[i] && (
-                    <div style={{ ...P.stakeLabel, marginBottom: 0, color: '#666' }}>// МОЖНО ИЗМЕНИТЬ ЕЩЁ 1 РАЗ</div>
+                    <div style={{ ...P.stakeLabel, marginBottom: 0, color: '#666' }}>МОЖНО ИЗМЕНИТЬ ЕЩЁ 1 РАЗ</div>
                   )}
 
-                  {isStakes && (
+                  {isStakes && round !== 7 && (
                     <div>
                       <div style={P.stakeLabel}>
-                        // СТАВКА {uniqueStakes ? '(0–5, каждая один раз)' : '(0–2)'}
+                        СТАВКА {uniqueStakes ? '(0–5, каждая один раз)' : ''}
                       </div>
-                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                         {config.stakesValues.map(v => {
                           const selected = state.stakes[i] === v
                           const takenElsewhere = uniqueStakes && !selected &&
                             Object.entries(state.stakes).some(([k, sv]) => sv === v && Number(k) !== i)
                           return (
-                            <button key={v} onClick={() => setStake(i, v)} style={P.stakeBtn(selected, takenElsewhere)}>
+                            <button key={v} onClick={() => setStake(i, v)} disabled={takenElsewhere}
+                              style={P.stakeBtn(selected, takenElsewhere)}>
                               {v}
                             </button>
                           )
                         })}
+                        {state.stakes[i] != null && (
+                          <button onClick={() => clearStake(i)} style={P.eraseBtn}>✕ СНЯТЬ</button>
+                        )}
                       </div>
                     </div>
+                  )}
+
+                  {/* П.19: Р8 — ставка галкой, фиксированная ×2 */}
+                  {isStakes && round === 7 && (
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                      <input type="checkbox" checked={state.stakes[i] === 2}
+                        onChange={e => e.target.checked ? setStake(i, 2) : clearStake(i)}
+                        style={{ width: 22, height: 22, accentColor: '#ea580c' }} />
+                      <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 17, fontWeight: 700, color: state.stakes[i] === 2 ? '#ea580c' : '#888' }}>
+                        СТАВКА ×2 {state.stakes[i] === 2 ? '· ПОСТАВЛЕНА' : ''}
+                      </span>
+                    </label>
                   )}
                 </>
               )}
             </div>
           )
-        })}
+        }) })()}
       </div>
 
       <div style={{ ...P.footer, color: accepting ? '#22c55e' : '#555' }}>
-        {accepting
-          ? `// ОТВЕТЫ ПРИНИМАЮТСЯ · ЗАПОЛНЕНО ${filled}/${questions.length}`
-          : `// ЗАПОЛНЕНО ${filled}/${questions.length} · ПРИЁМ ЕЩЁ НЕ ОТКРЫТ`}
+        {uniqueStakes && Object.keys(state.stakes).length < config.stakesValues.length
+          ? <span style={{ color: '#ef4444' }}>⚠ РАССТАВЬ ВСЕ СТАВКИ: {Object.keys(state.stakes).length}/{config.stakesValues.length}</span>
+          : accepting
+          ? `ОТВЕТЫ ПРИНИМАЮТСЯ · ЗАПОЛНЕНО ${filled}/${questions.length}`
+          : `ЗАПОЛНЕНО ${filled}/${questions.length} · ПРИЁМ ЕЩЁ НЕ ОТКРЫТ`}
+      </div>
+    </div>
+  )
+}
+
+// ═══ ВОПРОС «СОПОСТАВЬ» (цифра ↔ буква): тапаешь левый, потом правый — пара фиксируется ═══
+// q.match_pairs = { left: ['1','2','3'], right: ['А','Б','В'] }
+// Ответ хранится строкой вида "1А,2Б,3В" — по одной паре через запятую.
+function MatchPicker({ q, value, locked, onChange, onClear }) {
+  const pairs = value ? value.split(',').filter(Boolean) : []
+  const usedLeft = pairs.map(p => p[0])
+  const usedRight = pairs.map(p => p.slice(1))
+  const [selectedLeft, setSelectedLeft] = useState(null)
+
+  function tapLeft(l) {
+    if (locked || usedLeft.includes(l)) return
+    setSelectedLeft(l === selectedLeft ? null : l)
+  }
+  function tapRight(r) {
+    if (locked || usedRight.includes(r) || !selectedLeft) return
+    onChange([...pairs, `${selectedLeft}${r}`].join(','))
+    setSelectedLeft(null)
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: '#555' }}>
+        {selectedLeft ? `ВЫБРАНО: ${selectedLeft} → ТАПНИ ПАРУ СПРАВА` : 'ТАПНИ ЭЛЕМЕНТ СЛЕВА, ПОТОМ ПАРУ СПРАВА'}
+      </div>
+      <div style={{ display: 'flex', gap: 20 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+          {q.match_pairs.left.map(l => (
+            <button key={l} disabled={locked || usedLeft.includes(l)} onClick={() => tapLeft(l)} style={{
+              padding: '10px 14px', border: `2px solid ${selectedLeft === l ? '#ea580c' : usedLeft.includes(l) ? '#1a1a1a' : '#333'}`,
+              background: 'transparent', color: usedLeft.includes(l) ? '#333' : selectedLeft === l ? '#ea580c' : '#ccc',
+              fontFamily: 'Orbitron, monospace', fontSize: 18, fontWeight: 700, cursor: 'pointer',
+            }}>{l}</button>
+          ))}
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+          {q.match_pairs.right.map(r => (
+            <button key={r} disabled={locked || usedRight.includes(r)} onClick={() => tapRight(r)} style={{
+              padding: '10px 14px', border: `2px solid ${usedRight.includes(r) ? '#1a1a1a' : '#333'}`,
+              background: 'transparent', color: usedRight.includes(r) ? '#333' : '#ccc',
+              fontFamily: 'Rajdhani, sans-serif', fontSize: 18, fontWeight: 700, cursor: 'pointer', textAlign: 'left',
+            }}>{r}</button>
+          ))}
+        </div>
+      </div>
+      {pairs.length > 0 && (
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          {pairs.map((p, idx) => (
+            <span key={idx} style={{
+              padding: '6px 12px', border: '1px solid #22c55e', color: '#22c55e',
+              fontFamily: 'Orbitron, monospace', fontSize: 14,
+            }}>{p[0]} → {p.slice(1)}</span>
+          ))}
+          {!locked && <button onClick={onClear} style={{
+            padding: '8px 12px', border: '1px solid #333', background: 'transparent',
+            color: '#888', cursor: 'pointer', fontFamily: 'Share Tech Mono, monospace', fontSize: 11,
+          }}>СБРОС</button>}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ═══ П.17: ВОПРОС-ПОРЯДОК — тапаешь буквы в нужной последовательности ═══
+function OrderPicker({ q, value, locked, onChange, onClear }) {
+  const picked = value.split('')
+  function tap(key) {
+    if (locked || picked.includes(key)) return
+    onChange(value + key)
+  }
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: '#555' }}>
+        ТАПАЙ БУКВЫ В ПРАВИЛЬНОМ ПОРЯДКЕ
+      </div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {q.choices.map(c => (
+          <button key={c.key} disabled={locked || picked.includes(c.key)} onClick={() => tap(c.key)} style={{
+            padding: '12px 14px', border: `2px solid ${picked.includes(c.key) ? '#1a1a1a' : '#333'}`,
+            background: 'transparent', color: picked.includes(c.key) ? '#333' : '#ccc',
+            fontFamily: 'Rajdhani, sans-serif', fontSize: 16, fontWeight: 700, cursor: 'pointer',
+            textAlign: 'left',
+          }}>
+            <span style={{ color: picked.includes(c.key) ? '#333' : '#ea580c' }}>{c.key}</span> {c.text}
+          </button>
+        ))}
+      </div>
+      {/* Собранный порядок */}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', minHeight: 44 }}>
+        {picked.length === 0
+          ? <span style={{ color: '#333', fontSize: 13 }}>порядок пуст</span>
+          : picked.map((k, pos) => (
+            <span key={pos} style={{
+              width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              border: '2px solid #ea580c', color: '#ea580c',
+              fontFamily: 'Orbitron, monospace', fontSize: 18, fontWeight: 700,
+            }}>{k}</span>
+          ))}
+        {picked.length > 0 && !locked && (
+          <button onClick={onClear} style={{
+            padding: '8px 12px', border: '1px solid #333', background: 'transparent',
+            color: '#888', cursor: 'pointer', fontFamily: 'Share Tech Mono, monospace', fontSize: 11,
+          }}>СБРОС</button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ═══ П.7: ЭКРАН ПРОВЕРКИ — свои ответы read-only + отметки в реальном времени ═══
+function PlayerReview({ team, gameState }) {
+  const round = gameState.current_round
+  const config = ROUND_CONFIGS[round]
+  const [marks, setMarks] = useState([])
+
+  useEffect(() => {
+    let stop = false
+    async function load() {
+      const { data } = await supabase.from('answers').select('*')
+        .eq('team_id', team.id).eq('round_number', round)
+      if (!stop) setMarks(data || [])
+    }
+    load()
+    const t = setInterval(load, 2000)
+    return () => { stop = true; clearInterval(t) }
+  }, [round])
+
+  let num = 0
+  return (
+    <div style={{ minHeight: '100vh', background: '#050505', color: '#fff', display: 'flex', flexDirection: 'column' }}>
+      <div style={P.header}>
+        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 18, fontWeight: 700, color: team.color }}>{team.name}</div>
+        <div style={P.headerMeta}>РАУНД {round}</div>
+      </div>
+      <div style={{ padding: '14px 16px', fontFamily: 'Rajdhani, sans-serif', fontSize: 18, fontWeight: 700, color: '#ea580c', textAlign: 'center' }}>
+        СЕЙЧАС УЗНАЕМ ПРАВИЛЬНЫЕ ОТВЕТЫ!
+      </div>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '0 14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {(config?.questions || []).map((q, i) => {
+          if (q.block_intro) return null
+          num += 1
+          const a = marks.find(x => x.question_ref === `r${round}-q${i}`)
+          return (
+            <div key={i} style={{
+              background: '#0d0d0d', border: '1px solid #222',
+              borderLeft: `3px solid ${a?.is_correct === true ? '#22c55e' : a?.is_correct === false ? '#ef4444' : '#333'}`,
+              padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12,
+            }}>
+              <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: '#555', minWidth: 26 }}>{num}</div>
+              <div style={{ flex: 1, fontSize: 16, color: '#ddd' }}>{a?.answer_text || '—'}</div>
+              {a?.is_correct != null && (
+                <div style={{ fontSize: 22, color: a.is_correct ? '#22c55e' : '#ef4444' }}>
+                  {a.is_correct ? '✓' : '✗'}
+                </div>
+              )}
+            </div>
+          )
+        })}
       </div>
     </div>
   )
@@ -284,7 +549,7 @@ function Register({ onDone }) {
   return (
     <div style={P.center}>
       <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 36, fontWeight: 700, color: '#ea580c' }}>QUIZ NIGHT</div>
-      <div style={P.mono}>// РЕГИСТРАЦИЯ КОМАНДЫ</div>
+      <div style={P.mono}>РЕГИСТРАЦИЯ КОМАНДЫ</div>
       <input value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === 'Enter' && go()}
         placeholder="Название команды" maxLength={30} style={P.input} />
       <div style={{ display: 'flex', gap: 12 }}>
@@ -307,7 +572,7 @@ function Waiting({ message, sub, team }) {
   return (
     <div style={P.center}>
       {team && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 20, fontWeight: 700, color: team.color }}>{team.name}</div>}
-      <div style={{ ...P.mono, fontSize: 13, textAlign: 'center' }}>// {message}</div>
+      <div style={{ ...P.mono, fontSize: 13, textAlign: 'center' }}>{message}</div>
       {sub && <div style={{ ...P.mono, fontSize: 11, color: '#333' }}>{sub}</div>}
       <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#ea580c', animation: 'scanpulse 1.5s ease-in-out infinite' }} />
     </div>
@@ -347,6 +612,14 @@ const P = {
     background: '#151515', border: '1px solid #333', color: '#fff', padding: '10px 12px', resize: 'none',
     fontFamily: 'Inter, sans-serif', fontSize: 16, outline: 'none', width: '100%', lineHeight: 1.4,
   },
+  submitBtn: (edits, empty) => ({
+    padding: '10px 16px', border: 'none', cursor: edits >= 2 || empty ? 'default' : 'pointer',
+    background: edits >= 2 ? '#1a1a1a' : edits === 1 ? 'rgba(234,88,12,0.15)' : '#ea580c',
+    color: edits >= 2 ? '#22c55e' : edits === 1 ? '#ea580c' : '#fff',
+    border: edits === 1 ? '1px solid #ea580c' : 'none',
+    fontFamily: 'Rajdhani, sans-serif', fontSize: 16, fontWeight: 700, letterSpacing: '0.04em',
+    opacity: empty && edits < 2 ? 0.4 : 1,
+  }),
   choiceBtn: (active) => ({
     padding: '14px 0', border: `2px solid ${active ? '#ea580c' : '#333'}`,
     background: active ? 'rgba(234,88,12,0.15)' : 'transparent',
@@ -354,6 +627,11 @@ const P = {
     fontFamily: 'Rajdhani, sans-serif', fontSize: 24, fontWeight: 700, cursor: 'pointer',
   }),
   stakeLabel: { fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: '#555', marginBottom: 8, letterSpacing: '0.1em' },
+  eraseBtn: {
+    padding: '8px 12px', border: '1px solid #333', background: 'transparent',
+    color: '#888', cursor: 'pointer', fontFamily: 'Share Tech Mono, monospace',
+    fontSize: 11, letterSpacing: '0.08em', alignSelf: 'flex-start',
+  },
   stakeBtn: (selected, taken) => ({
     width: 46, height: 46,
     border: `2px solid ${selected ? '#ea580c' : taken ? '#1a1a1a' : '#333'}`,

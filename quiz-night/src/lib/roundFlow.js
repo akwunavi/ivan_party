@@ -18,6 +18,7 @@
 // Перезагрузка страницы = тот же слайд.
 
 import { updateGameState } from './gameActions'
+import { TOTAL_ROUNDS } from './roundsRegistry'
 
 export async function setPhase(status, step = 0, extra = {}) {
   await updateGameState({
@@ -50,6 +51,16 @@ export async function advance(gameState, roundConfig) {
   }
 
   if (status === 'answer_time') return setPhase('show_answers', 0)
+
+  // С табло — в следующий раунд (после Р8 — в лобби)
+  if (status === 'scoreboard') {
+    const next = (gameState.current_round ?? 0) + 1
+    if (next <= TOTAL_ROUNDS) return updateGameState({
+      current_round: next, current_step: 0, status: 'round_intro',
+      accepting_answers: false, show_scoreboard: false, step_data: {},
+    })
+    return updateGameState({ status: 'lobby', current_round: 0, current_step: 0, show_scoreboard: false })
+  }
 }
 
 // Переход "назад" (если ведущий промахнулся)

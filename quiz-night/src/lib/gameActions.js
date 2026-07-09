@@ -70,3 +70,20 @@ export async function registerTeam(name, color) {
   if (error) throw error
   return data
 }
+
+// ═══ НОВАЯ ИГРА: полный сброс ═══
+// Удаляет ответы, ставки, историю баллов и команды; возвращает игру в лобби.
+// Капитанам нужно будет заново зарегистрироваться (localStorage у них
+// чистится сам при регистрации новой команды — просто заходят по QR заново).
+export async function resetGame() {
+  // порядок важен из-за внешних ключей
+  await supabase.from('answers').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+  await supabase.from('stakes').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+  await supabase.from('score_log').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+  await supabase.from('teams').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+  await updateGameState({
+    status: 'lobby', current_round: 0, current_step: 0,
+    accepting_answers: false, show_scoreboard: false,
+    step_data: {}, timer_started_at: null,
+  })
+}

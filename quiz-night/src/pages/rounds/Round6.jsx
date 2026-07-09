@@ -1,26 +1,34 @@
 import RoundShell from '../../components/RoundShell'
 
-// ═══ РАУНД 6: РЕБУСЫ ИЗ ДВУХ КАРТИНОК ═══
-// Всегда 2 картинки. Слово = 3 последние буквы первой + 3 первые буквы второй.
-// Пример: КорабЛИК + ВИНоград = ЛИКВИН (условно).
+// ═══ РАУНД 7: ТЕМАТИЧЕСКИЙ ═══
+// 5 обычных вопросов + 6-й специальный: угадать тему раунда (текстом, что угодно).
+// Угадали тему → баллы ЭТОГО раунда ×2 (кнопка в админке вызывает double_round_score).
 export const ROUND6 = {
   number: 6,
-  titleLines: ['РЕБУСЫ', 'ИЗ КАРТИНОК'],
-  metaLine: '10 ВОПРОСОВ · 60 СЕК · 1 БАЛЛ',
+  titleLines: ['ТЕМАТИЧЕСКИЙ', 'РАУНД'],
+  metaLine: '5+1 ВОПРОСОВ · 60 СЕК · ×2 ЗА ТЕМУ',
   timerSeconds: 60,
   hasRepeats: false,
   autoAdvanceQuestions: false,
-  useTts: false,   // тут нечего озвучивать — только картинки
   rules: [
-    'На экране всегда две картинки',
-    'Составьте слово: 3 последние буквы первого слова + 3 первые буквы второго',
-    'На каждый ребус 60 секунд',
-    'Верный ответ — 1 балл',
+    '5 вопросов — текст, музыка, картинки. По 1 баллу',
+    'На каждый вопрос 60 секунд',
+    'Шестой вопрос — угадайте тему раунда',
+    'Угадали тему — все баллы этого раунда удваиваются',
   ],
   questions: [
-    { content_type: 'multi_image', question_text: '', media_urls: ['/media/r6/q1-1.jpg', '/media/r6/q1-2.jpg'], correct_answer: '—' },
-    { content_type: 'multi_image', question_text: '', media_urls: ['/media/r6/q2-1.jpg', '/media/r6/q2-2.jpg'], correct_answer: '—' },
-    // ...добавляй до 10
+    { content_type: 'text', question_text: 'Вопрос 1?', media_urls: [], correct_answer: '—' },
+    { content_type: 'text', question_text: 'Вопрос 2?', media_urls: [], correct_answer: '—' },
+    { content_type: 'text', question_text: 'Вопрос 3?', media_urls: [], correct_answer: '—' },
+    { content_type: 'text', question_text: 'Вопрос 4?', media_urls: [], correct_answer: '—' },
+    { content_type: 'text', question_text: 'Вопрос 5?', media_urls: [], correct_answer: '—' },
+    {
+      content_type: 'text',
+      question_text: 'ГЛАВНЫЙ ВОПРОС: какая тема объединяет все вопросы раунда?',
+      media_urls: [],
+      correct_answer: '— (тема раунда)',
+      is_final_question: true,
+    },
   ],
 }
 

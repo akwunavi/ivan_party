@@ -52,3 +52,12 @@ export function isFuzzyMatch(answer, correct) {
   const variants = String(correct ?? '').split('/').map(normalize).filter(Boolean)
   return variants.some(v => levenshtein(a, v) <= tolerance(v.length))
 }
+
+
+// Буквы А/В/С/Е/К/М/Н/О/Р/Т/Х часто путаются между латиницей и кириллицей.
+// letterEq('A','А') === true — гомоглифы приводим к одному алфавиту.
+const HOMOGLYPHS = { 'a':'а','b':'в','c':'с','e':'е','h':'н','k':'к','m':'м','o':'о','p':'р','t':'т','x':'х','y':'у','г':'г' }
+export function letterEq(a, b) {
+  const norm = s => String(s ?? '').trim().toLowerCase().split('').map(ch => HOMOGLYPHS[ch] ?? ch).join('')
+  return norm(a) !== '' && norm(a) === norm(b)
+}
