@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { useTeams } from '../hooks/useTeams'
+import { updateGameState } from '../lib/gameActions'
 
 // Hash-роутинг: ссылка для игроков выглядит как .../index.html#/player
 const PLAYER_URL = `${window.location.origin}${window.location.pathname}#/player`
@@ -26,11 +27,12 @@ export default function Lobby() {
       {/* Заголовок */}
       <div style={{ textAlign: 'center' }}>
         <div className="mono-tag" style={{ marginBottom: 16 }}>
-          // QUIZ_NIGHT :: ЛОББИ
+          QUIZ_NIGHT :: ЛОББИ
         </div>
-        <div style={{
+        <div className="glitch-title" style={{
           fontFamily: 'Rajdhani, sans-serif',
-          fontSize: 'clamp(72px, 13vw, 160px)',
+          fontSize: 'clamp(120px, 20vw, 300px)',
+          fontFamily: 'Russo One, Rajdhani, sans-serif',
           fontWeight: 700, lineHeight: 0.92,
           letterSpacing: '-0.02em', color: '#fff'
         }}>
@@ -42,7 +44,8 @@ export default function Lobby() {
       {/* Сканлайн */}
       <div className="accent-line scan" style={{ width: '80%' }} />
 
-      {/* QR блок — компактный, без строки-ссылки */}
+      {/* QR + команды справа */}
+      <div style={{ display: 'flex', gap: 40, alignItems: 'stretch', flexWrap: 'wrap', justifyContent: 'center' }}>
       <div style={{
         background: '#0d0d0d',
         border: '1px solid #333',
@@ -72,42 +75,60 @@ export default function Lobby() {
             fontFamily: 'Share Tech Mono, monospace',
             fontSize: 11, color: '#555', letterSpacing: '0.1em'
           }}>
-            // ОТСКАНИРУЙ QR
+            ОТСКАНИРУЙ QR
           </div>
         </div>
       </div>
 
-      {/* Команды */}
+      {/* Команды — справа от QR, с глитч-неоном */}
       {teams.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', maxWidth: 500 }}>
-          <div className="mono-tag" style={{ marginBottom: 4 }}>
-            // ПОДКЛЮЧИЛИСЬ ({teams.length})
-          </div>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            {teams.map((team, i) => (
-              <div key={team.id} style={{
-                padding: '8px 20px',
-                border: `1px solid ${team.color || TEAM_COLORS[i % 4]}`,
-                borderLeft: `3px solid ${team.color || TEAM_COLORS[i % 4]}`,
-                background: `${team.color || TEAM_COLORS[i % 4]}15`,
-                fontFamily: 'Rajdhani, sans-serif',
-                fontSize: 16, fontWeight: 600, color: '#fff',
-                clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%)',
-                animation: 'fadeIn 0.3s ease'
-              }}>
-                {team.name}
-              </div>
-            ))}
-          </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, justifyContent: 'center', minWidth: 240 }}>
+          <div className="mono-tag" style={{ fontSize: 14 }}>ПОДКЛЮЧИЛИСЬ ({teams.length})</div>
+          {teams.map((team, i) => (
+            <div key={team.id} className="team-chip-fx" style={{
+              padding: '14px 26px',
+              border: `2px solid ${team.color || TEAM_COLORS[i % 4]}`,
+              borderLeft: `5px solid ${team.color || TEAM_COLORS[i % 4]}`,
+              background: `${team.color || TEAM_COLORS[i % 4]}18`,
+              fontFamily: 'Russo One, Rajdhani, sans-serif',
+              fontSize: 24, color: '#fff',
+              clipPath: 'polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%)',
+            }}>
+              {team.name}
+            </div>
+          ))}
         </div>
       )}
+      </div>
+
+
 
       {teams.length === 0 && (
-        <div style={{
+        <div className="glitch-title" style={{
           fontFamily: 'Share Tech Mono, monospace',
           fontSize: 13, color: '#555', letterSpacing: '0.1em'
         }}>
-          // ОЖИДАНИЕ КОМАНД...
+          ОЖИДАНИЕ КОМАНД...
+        </div>
+      )}
+
+      {/* Старт игры прямо с лобби, когда команды на месте */}
+      {teams.length > 0 && (
+        <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+          <button className="btn btn-ghost" style={{ fontSize: 16, padding: '14px 28px' }}
+            onClick={() => updateGameState({
+              current_round: 0, current_step: 0, status: 'round_intro',
+              accepting_answers: false, show_scoreboard: false, step_data: {},
+            })}>
+            РАЗОГРЕВ
+          </button>
+          <button className="btn btn-primary" style={{ fontSize: 26, padding: '18px 48px' }}
+            onClick={() => updateGameState({
+              current_round: 1, current_step: 0, status: 'round_intro',
+              accepting_answers: false, show_scoreboard: false, step_data: {},
+            })}>
+            НАЧАТЬ ИГРУ →
+          </button>
         </div>
       )}
 

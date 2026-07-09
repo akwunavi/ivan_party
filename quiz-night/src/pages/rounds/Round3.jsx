@@ -1,6 +1,4 @@
-import { useEffect, useRef } from 'react'
 import RoundShell from '../../components/RoundShell'
-import { advance } from '../../lib/roundFlow'
 
 // ═══ РАУНД 3: ТЕСТ А/Б/В/Г ═══
 // 15 вопросов, автопереключение через 5 сек после таймера.
@@ -27,37 +25,189 @@ export const ROUND3 = {
   questions: [
     {
       content_type: 'choice',
-      question_text: 'Вопрос 1?',
+      question_text: 'Что делают с небылицами?',
       choices: [
-        { key: 'А', text: 'Вариант 1' },
-        { key: 'Б', text: 'Вариант 2' },
-        { key: 'В', text: 'Вариант 3' },
-        { key: 'Г', text: 'Вариант 4' },
+        { key: 'А', text: 'Вышивают' },
+        { key: 'Б', text: 'Вырезают' },
+        { key: 'В', text: 'Выпиливают' },
+        { key: 'Г', text: 'Плетут' },
+      ],
+      correct_choice: 'Г',           // ← верный ответ задаёшь тут
+      correct_answer: 'Г — Плетут',
+    },
+    {
+      content_type: 'choice',
+      question_text: 'Какой химический элемент составляет более половины массы тела человека?',
+      choices: [
+        { key: 'А', text: 'Углерод' },
+        { key: 'Б', text: 'Кальций' },
+        { key: 'В', text: 'Кислород' },
+        { key: 'Г', text: 'Железо' },
+      ],
+      correct_choice: 'В',           // ← верный ответ задаёшь тут
+      correct_answer: 'В — Кислород',
+    },
+    {
+      content_type: 'choice',
+      question_text: 'Какую часть тела также называют «атлант»?',
+      choices: [
+        { key: 'А', text: 'Головной мозг' },
+        { key: 'Б', text: 'Шестая пара ребер' },
+        { key: 'В', text: 'Шейный позвонок' },
+        { key: 'Г', text: 'Часть плеча' },
+      ],
+      correct_choice: 'В',           // ← верный ответ задаёшь тут
+      correct_answer: 'В — Шейный позвонок',
+    },
+            {
+      content_type: 'choice',
+      question_text: 'Что названо в честь Святой Троицы?',
+      choices: [
+        { key: 'А', text: 'Остров Тринидад' },
+        { key: 'Б', text: 'Архипелаг Тристан-да-Кунья' },
+        { key: 'В', text: 'город Триполи' },
+        { key: 'Г', text: 'Пещера Труа-Фурер' },
+      ],
+      correct_choice: 'А',           // ← верный ответ задаёшь тут
+      correct_answer: 'А — Остров Тринидад',
+    },
+        {
+      content_type: 'choice',
+      question_text: 'Как называют исправные, но неиспользуемые суда без экипажей, размещенные в специально отведенной акватории?',
+      choices: [
+        { key: 'А', text: 'Забавный флот' },
+        { key: 'Б', text: 'Шуточный флот' },
+        { key: 'В', text: 'Прикольный флот' },
+        { key: 'Г', text: 'Репризный флот' },
+      ],
+      correct_choice: 'В',           // ← верный ответ задаёшь тут
+      correct_answer: 'В — Прикольный флот',
+    },
+    {
+      content_type: 'choice',
+      question_text: 'Какое насекомое вызвало короткое замыкание в ранней версии вычислительной машины, тем самым породив термин «компьютерный баг» («баг» в переводе с англ. «насекомое»)?',
+      choices: [
+        { key: 'А', text: 'Мотылек' },
+        { key: 'Б', text: 'Таракан' },
+        { key: 'В', text: 'Муха' },
+        { key: 'Г', text: 'Японский хрущик' },
+      ],
+      correct_choice: 'А',           // ← верный ответ задаёшь тут
+      correct_answer: 'А — Мотылек',
+    },
+   {
+      content_type: 'choice',
+      question_text: 'Под каким названием известна единица с последующими ста нулями?',
+      choices: [
+        { key: 'А', text: 'Гугол' },
+        { key: 'Б', text: 'Мегатрон' },
+        { key: 'В', text: 'Гигабит' },
+        { key: 'Г', text: 'Наномоль' },
+      ],
+      correct_choice: 'А',           // ← верный ответ задаёшь тут
+      correct_answer: 'А — Гугол',
+  },
+     {
+      content_type: 'choice',
+      question_text: 'С какой фигуры начинаются соревнования по городошному спорту?',
+      choices: [
+        { key: 'А', text: 'Часовые' },
+        { key: 'Б', text: 'Артиллерия' },
+        { key: 'В', text: 'Пулеметное гнездо' },
+        { key: 'Г', text: 'Пушка' },
+      ],
+      correct_choice: 'Г',           // ← верный ответ задаёшь тут
+      correct_answer: 'Г — Пушка',
+  },
+       {
+      content_type: 'choice',
+      question_text: 'Какой химический элемент назван в честь злого подземного гнома?',
+      choices: [
+        { key: 'А', text: 'Гафний' },
+        { key: 'Б', text: 'Кобальт' },
+        { key: 'В', text: 'Бериллий' },
+        { key: 'Г', text: 'Теллур' },
       ],
       correct_choice: 'Б',           // ← верный ответ задаёшь тут
-      correct_answer: 'Б — Вариант 2',
-    },
-    // ...добавляй до 15
-  ],
+      correct_answer: 'Б — Кобальт',
+  },
+         {
+      content_type: 'choice',
+      question_text: 'Сколько звёзд на погонах старшего лейтенанта?',
+      choices: [
+        { key: 'А', text: 'Одна' },
+        { key: 'Б', text: 'Две' },
+        { key: 'В', text: 'Три' },
+        { key: 'Г', text: 'Четыре' },
+      ],
+      correct_choice: 'В',           // ← верный ответ задаёшь тут
+      correct_answer: 'В — Три',
+  },
+           {
+      content_type: 'choice',
+      question_text: 'Сколько морей омывают Балканский полуостров?',
+      choices: [
+        { key: 'А', text: 'Три' },
+        { key: 'Б', text: 'Четыре' },
+        { key: 'В', text: 'Пять' },
+        { key: 'Г', text: 'Шесть' },
+      ],
+      correct_choice: 'Г',           // ← верный ответ задаёшь тут
+      correct_answer: 'Г — Шесть',
+  },
+             {
+      content_type: 'choice',
+      question_text: 'Кто из этих философов в 1864 году написал музыку на стихи А. С. Пушкина «Заклинание» и «Зимний вечер»?',
+      choices: [
+        { key: 'А', text: 'Юнг' },
+        { key: 'Б', text: 'Гегель' },
+        { key: 'В', text: 'Ницше' },
+        { key: 'Г', text: 'Шопенгауэр' },
+      ],
+      correct_choice: 'В',           // ← верный ответ задаёшь тут
+      correct_answer: 'В — Ницше',
+  },
+               {
+      content_type: 'choice',
+      question_text: 'Какой вид кавалерии предназначался для боевых действий как в конном, так и в пешем строю?',
+      choices: [
+        { key: 'А', text: 'Драгуны' },
+        { key: 'Б', text: 'Кирасиры' },
+        { key: 'В', text: 'Уланы' },
+        { key: 'Г', text: 'Гусары' },
+      ],
+      correct_choice: 'А',           // ← верный ответ задаёшь тут
+      correct_answer: 'А — Драгуны',
+  },
+                 {
+      content_type: 'choice',
+      question_text: 'В какой из этих столиц бывших союзных республик раньше других появилось метро?',
+      choices: [
+        { key: 'А', text: 'Тбилиси' },
+        { key: 'Б', text: 'Баку' },
+        { key: 'В', text: 'Ереван' },
+        { key: 'Г', text: 'Минск' },
+      ],
+      correct_choice: 'А',           // ← верный ответ задаёшь тут
+      correct_answer: 'А — Тбилиси',
+  },
+                   {
+      content_type: 'choice',
+      question_text: 'Какое имя не принимал ни один папа римский?',
+      choices: [
+        { key: 'А', text: 'Виктор' },
+        { key: 'Б', text: 'Валентин' },
+        { key: 'В', text: 'Георгий' },
+        { key: 'Г', text: 'Евгений' },
+      ],
+      correct_choice: 'В',           // ← верный ответ задаёшь тут
+      correct_answer: 'В — Георгий',
+  }
+],
 }
 
 export default function Round3({ gameState }) {
-  const timeoutRef = useRef(null)
-
-  // Автопереключение: RoundShell вызывает advance по концу таймера,
-  // но для R3 нужна пауза 5 сек — оборачиваем
-  const configWithDelay = {
-    ...ROUND3,
-    autoAdvanceQuestions: false, // отключаем мгновенный advance из RoundShell
-  }
-
-  useEffect(() => {
-    if (gameState.status !== 'question') return
-    // таймер вопроса + пауза 5 сек, затем сам вперёд
-    const total = (ROUND3.timerSeconds + ROUND3.autoAdvanceDelayMs / 1000) * 1000
-    timeoutRef.current = setTimeout(() => advance(gameState, ROUND3), total)
-    return () => clearTimeout(timeoutRef.current)
-  }, [gameState.status, gameState.current_step])
-
-  return <RoundShell gameState={gameState} config={configWithDelay} />
+  // Автопролистывание встроено в RoundShell: срабатывает ровно по концу таймера
+  // + пауза autoAdvanceDelayMs (5 сек). Никаких параллельных таймеров.
+  return <RoundShell gameState={gameState} config={ROUND3} />
 }

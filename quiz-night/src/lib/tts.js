@@ -1,13 +1,20 @@
 // Web Speech API — озвучка текста вопроса
 // Возвращает Promise, резолвится когда озвучка завершена
 
-export function speak(text, { rate = 0.95, pitch = 1, lang = 'ru-RU' } = {}) {
-  return new Promise((resolve, reject) => {
+export function speak(text, { rate = 0.95, pitch = 1, lang = 'ru-RU', maxWaitMs = 20000 } = {}) {
+  return new Promise((resolve) => {
     if (!window.speechSynthesis) {
       console.warn('Speech synthesis not supported')
       resolve()
       return
     }
+
+    // Страховка: если озвучка зависла/не стартовала (политика браузера),
+    // не блокируем игру — резолвим принудительно
+    const safety = setTimeout(() => {
+      window.speechSynthesis.cancel()
+      resolve()
+    }, maxWaitMs)
 
     // Остановить текущую озвучку
     window.speechSynthesis.cancel()
@@ -17,15 +24,15 @@ export function speak(text, { rate = 0.95, pitch = 1, lang = 'ru-RU' } = {}) {
     utter.rate = rate
     utter.pitch = pitch
 
-    // Выбрать русский голос если есть
     const voices = window.speechSynthesis.getVoices()
     const ruVoice = voices.find(v => v.lang.startsWith('ru'))
     if (ruVoice) utter.voice = ruVoice
 
-    utter.onend = resolve
+    utter.onend = () => { clearTimeout(safety); resolve() }
     utter.onerror = (e) => {
       console.warn('TTS error:', e)
-      resolve() // не блокируем игру при ошибке
+      clearTimeout(safety)
+      resolve()
     }
 
     window.speechSynthesis.speak(utter)

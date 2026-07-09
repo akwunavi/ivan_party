@@ -8,7 +8,7 @@ export function useAnswers(roundNumber) {
   const [answers, setAnswers] = useState([])
 
   useEffect(() => {
-    if (!roundNumber) { setAnswers([]); return }
+    if (roundNumber == null) { setAnswers([]); return }  // раунд 0 — валидный номер, не falsy-ловушка
     let stopped = false
 
     async function load() {

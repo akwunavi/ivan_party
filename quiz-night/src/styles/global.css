@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Russo+One&family=Rajdhani:wght@500;600;700&family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&family=Inter:wght@400;500;600&display=swap');
 
 /* ── ТОКЕНЫ ── */
 :root {
@@ -15,7 +15,8 @@
   --success:   #22c55e;
   --danger:    #ef4444;
 
-  --font-display: 'Rajdhani', sans-serif;
+  --font-display: 'Russo One', 'Rajdhani', sans-serif;
+  --font-digits:  'Orbitron', 'Share Tech Mono', monospace;
   --font-mono:    'Share Tech Mono', monospace;
   --font-body:    'Inter', sans-serif;
 
@@ -115,3 +116,161 @@ body {
   font-size: 11px; letter-spacing: 0.2em;
   color: var(--accent); text-transform: uppercase;
 }
+
+/* ═══════════ КИБЕРПАНК-АПГРЕЙД ═══════════ */
+:root {
+  --accent2:   #22d3ee;   /* циановый неон — вторичный акцент */
+  --glow:      0 0 24px rgba(234,88,12,0.45);
+  --glow2:     0 0 24px rgba(34,211,238,0.35);
+}
+
+/* Фон с виньеткой и живой сеткой */
+.grid-bg {
+  background-image:
+    radial-gradient(ellipse at 50% 0%, rgba(234,88,12,0.06) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 120%, rgba(34,211,238,0.05) 0%, transparent 55%),
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+}
+
+/* Заголовки с неоновым свечением */
+.neon-title {
+  text-shadow: 0 0 30px rgba(234,88,12,0.45), 0 0 60px rgba(234,88,12,0.15);
+}
+.neon-cyan { color: var(--accent2); text-shadow: 0 0 24px rgba(34,211,238,0.5); }
+
+/* Рамка с уголками-скобками как в HUD */
+.hud-frame { position: relative; }
+.hud-frame::before, .hud-frame::after {
+  content: ''; position: absolute; width: 18px; height: 18px;
+  border-color: var(--accent); border-style: solid;
+}
+.hud-frame::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+.hud-frame::after  { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+/* Кнопки: свечение на ховере */
+.btn-primary:hover { box-shadow: var(--glow); }
+.btn-ghost:hover   { box-shadow: var(--glow2); border-color: var(--accent2); color: var(--accent2); }
+
+/* Бегущая линия сканера по верху экрана */
+/* Бегущая линия убрана как раздражающая. Вместо неё — незаметные амбиент-эффекты: */
+.scanline-fx { display: none; }
+
+/* 1) Очень медленный дрейф сетки (60с на клетку — глазом почти не считывается) */
+@keyframes gridDrift { from { background-position: 0 0, 0 0, 0 0, 0 0; } to { background-position: 0 0, 0 0, 40px 40px, 40px 40px; } }
+.grid-bg { animation: gridDrift 60s linear infinite; }
+
+/* 2) Медленное «дыхание» виньетки */
+@keyframes vignetteBreath { 0%,100% { opacity: 1; } 50% { opacity: 0.75; } }
+.grid-bg::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 0%, rgba(234,88,12,0.05) 0%, transparent 55%);
+  animation: vignetteBreath 9s ease-in-out infinite;
+}
+.grid-bg { position: relative; }
+
+/* Появление ответа */
+@keyframes revealUp { from { opacity: 0; transform: translateY(14px) scale(0.98); } to { opacity: 1; transform: none; } }
+.reveal-up { animation: revealUp 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+
+
+/* ── TYPEWRITER (п.6): мигающий курсор ── */
+@keyframes cursorBlink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+.tw-cursor {
+  display: inline-block; width: 0.55em; margin-left: 2px;
+  background: currentColor; height: 1em; vertical-align: -0.1em;
+  animation: cursorBlink 0.8s step-start infinite;
+}
+
+/* ── П.5: неоновые орбы — медленно плывущие пятна света в фоне ── */
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0, 0); }
+  33%      { transform: translate(4vw, -3vh); }
+  66%      { transform: translate(-3vw, 2vh); }
+}
+.grid-bg::before {
+  content: ''; position: absolute; inset: -20%;
+  pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(circle 340px at 18% 30%, rgba(234,88,12,0.07), transparent 70%),
+    radial-gradient(circle 300px at 82% 70%, rgba(34,211,238,0.05), transparent 70%);
+  animation: orbFloat 24s ease-in-out infinite;
+}
+.grid-bg > * { position: relative; z-index: 1; }
+
+/* ── П.6: анимированная градиентная подчёркивающая линия (шапки) ── */
+@keyframes gradientSlide { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+.gradient-underline {
+  height: 3px; width: 100%;
+  background: linear-gradient(90deg, transparent, var(--accent), var(--accent2), var(--accent), transparent);
+  background-size: 200% 100%;
+  animation: gradientSlide 6s linear infinite;
+}
+
+/* Плитки своей игры: свечение при наведении */
+.jeopardy-tile:not(:disabled):hover {
+  box-shadow: 0 0 18px rgba(234,88,12,0.45), inset 0 0 12px rgba(234,88,12,0.12);
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+}
+
+/* ── ЛОББИ: яркая анимация чипов команд (глитч + неоновое мерцание) ── */
+@keyframes neonFlicker {
+  0%, 100% { opacity: 1; box-shadow: 0 0 14px rgba(234,88,12,0.5), inset 0 0 8px rgba(234,88,12,0.15); }
+  8%  { opacity: 0.6; box-shadow: none; }
+  10% { opacity: 1; }
+  38% { opacity: 1; box-shadow: 0 0 22px rgba(34,211,238,0.6), inset 0 0 10px rgba(34,211,238,0.2); }
+  42% { opacity: 0.75; }
+  46% { opacity: 1; }
+  71% { opacity: 0.55; box-shadow: none; }
+  73% { opacity: 1; box-shadow: 0 0 18px rgba(234,88,12,0.55); }
+}
+@keyframes glitchShift {
+  0%, 92%, 100% { transform: translate(0, 0); clip-path: none; }
+  93% { transform: translate(-3px, 1px); }
+  94% { transform: translate(3px, -1px); clip-path: inset(20% 0 40% 0); }
+  95% { transform: translate(-2px, 0); clip-path: inset(60% 0 10% 0); }
+  96% { transform: translate(0, 0); clip-path: none; }
+}
+.team-chip-fx {
+  animation: neonFlicker 3.2s ease-in-out infinite, glitchShift 4.7s steps(1) infinite;
+}
+
+/* ═══ П.1: ГЛИТЧ КАК В CYBERPUNK — RGB-расщепление + дёрганье ═══ */
+@keyframes glitchRGB {
+  0%, 86%, 100% { text-shadow: 0 0 30px rgba(234,88,12,0.45); transform: none; }
+  87% { text-shadow: -4px 0 #ef4444, 4px 0 #22d3ee, 0 0 30px rgba(234,88,12,0.45); transform: translateX(2px); }
+  88% { text-shadow: 4px 0 #ef4444, -4px 0 #22d3ee; transform: translateX(-3px) skewX(-2deg); }
+  89% { text-shadow: -6px 0 #ef4444, 6px 0 #22d3ee; transform: translateX(1px); }
+  90% { text-shadow: 0 0 30px rgba(234,88,12,0.45); transform: none; }
+  93% { text-shadow: 3px 0 #ef4444, -3px 0 #22d3ee; transform: translateY(-2px); }
+  94% { text-shadow: 0 0 30px rgba(234,88,12,0.45); transform: none; }
+}
+.glitch-title { animation: glitchRGB 5s steps(1) infinite; }
+
+/* ═══ П.6: появление правил — строки въезжают слева с задержкой ═══ */
+@keyframes ruleSlideIn {
+  from { opacity: 0; transform: translateX(-30px); clip-path: inset(0 100% 0 0); }
+  to   { opacity: 1; transform: none; clip-path: inset(0 0 0 0); }
+}
+.rule-line { opacity: 0; animation: ruleSlideIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+
+/* ═══ П.7: орбы больше не создают скролл ═══ */
+.grid-bg { overflow: hidden; }
+
+/* ── «ОТВЕЧАЙТЕ!» — отдельная анимация: пульсирующий двойной контур ── */
+@keyframes answerPulseRing {
+  0%   { box-shadow: 0 0 0 0 rgba(34,197,94,0.5), 0 0 0 0 rgba(34,197,94,0.25); }
+  70%  { box-shadow: 0 0 0 18px rgba(34,197,94,0), 0 0 0 36px rgba(34,197,94,0); }
+  100% { box-shadow: 0 0 0 0 rgba(34,197,94,0), 0 0 0 0 rgba(34,197,94,0); }
+}
+.answer-pulse {
+  animation: answerPulseRing 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  border-radius: 8px;
+}
+@keyframes answerTextBeat {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.04); }
+}
+.answer-pulse-text { animation: answerTextBeat 1.8s ease-in-out infinite; display: inline-block; }

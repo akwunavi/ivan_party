@@ -45,21 +45,16 @@ export default function Timer({ seconds, onComplete, autoStart = false }) {
 
       {/* Число */}
       <div style={{
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+        display: 'flex', justifyContent: 'center', alignItems: 'center'
       }}>
         <span style={{
-          fontFamily: 'Share Tech Mono, monospace',
-          fontSize: 40, lineHeight: 1,
+          fontFamily: 'Orbitron, Share Tech Mono, monospace',
+          fontSize: 42, lineHeight: 1, fontWeight: 700,
           color: isLow ? '#ef4444' : '#ea580c',
-          transition: 'color 0.5s'
+          transition: 'color 0.5s',
+          textShadow: isLow ? '0 0 18px rgba(239,68,68,0.5)' : '0 0 18px rgba(234,88,12,0.4)',
         }}>
           {String(remaining).padStart(2, '0')}
-        </span>
-        <span style={{
-          fontFamily: 'Share Tech Mono, monospace',
-          fontSize: 11, color: '#555', letterSpacing: '0.2em'
-        }}>
-          // SEC_REMAINING
         </span>
       </div>
     </div>

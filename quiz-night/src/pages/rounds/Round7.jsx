@@ -1,34 +1,27 @@
 import RoundShell from '../../components/RoundShell'
 
-// ═══ РАУНД 7: ТЕМАТИЧЕСКИЙ ═══
-// 5 обычных вопросов + 6-й специальный: угадать тему раунда (текстом, что угодно).
-// Угадали тему → баллы ЭТОГО раунда ×2 (кнопка в админке вызывает double_round_score).
+// ═══ РАУНД 8: ФИНАЛЬНЫЕ СТАВКИ ═══
+// 10 вопросов обо всём, без повторов. Ставка 0–2, в любой момент до конца приёма.
+// Верно со ставкой: ставка + 1. Неверно: минус ставка. Без ставки — просто 1/0.
 export const ROUND7 = {
   number: 7,
-  titleLines: ['ТЕМАТИЧЕСКИЙ', 'РАУНД'],
-  metaLine: '5+1 ВОПРОСОВ · 60 СЕК · ×2 ЗА ТЕМУ',
+  titleLines: ['ФИНАЛЬНЫЕ', 'СТАВКИ'],
+  metaLine: '10 ВОПРОСОВ · 60 СЕК · СТАВКА ДО 2',
   timerSeconds: 60,
   hasRepeats: false,
+  stakesRound: true,
+  stakesValues: [0, 1, 2],   // свободный выбор, можно повторять
   autoAdvanceQuestions: false,
   rules: [
-    '5 вопросов — текст, музыка, картинки. По 1 баллу',
-    'На каждый вопрос 60 секунд',
-    'Шестой вопрос — угадайте тему раунда',
-    'Угадали тему — все баллы этого раунда удваиваются',
+    '10 вопросов обо всём, на каждый 60 секунд',
+    'Можете поставить ставку от 0 до 2 на любой вопрос',
+    'Верный ответ: ставка + 1 балл. Неверный: минус ставка',
+    'Без ставки: просто 1 балл за верный ответ',
   ],
   questions: [
     { content_type: 'text', question_text: 'Вопрос 1?', media_urls: [], correct_answer: '—' },
     { content_type: 'text', question_text: 'Вопрос 2?', media_urls: [], correct_answer: '—' },
-    { content_type: 'text', question_text: 'Вопрос 3?', media_urls: [], correct_answer: '—' },
-    { content_type: 'text', question_text: 'Вопрос 4?', media_urls: [], correct_answer: '—' },
-    { content_type: 'text', question_text: 'Вопрос 5?', media_urls: [], correct_answer: '—' },
-    {
-      content_type: 'text',
-      question_text: 'ГЛАВНЫЙ ВОПРОС: какая тема объединяет все вопросы раунда?',
-      media_urls: [],
-      correct_answer: '— (тема раунда)',
-      is_final_question: true,
-    },
+    // ...добавляй до 10
   ],
 }
 
