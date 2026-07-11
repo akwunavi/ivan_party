@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { updateGameState } from '../lib/gameActions'
+import { TOTAL_ROUNDS } from '../lib/roundsRegistry'
 
 // ═══ ПЕРЕРЫВ 10 МИНУТ ═══
 // Отсчёт синхронен на всех экранах: старт хранится в game_state.timer_started_at
@@ -32,9 +33,9 @@ export default function BreakScreen({ gameState }) {
       </div>
       <div className="gradient-underline" style={{ maxWidth: 500, width: '100%' }} />
       <button className="btn btn-primary" onClick={() => updateGameState({
-        current_round: nextRound <= 8 ? nextRound : 0,
+        current_round: nextRound <= TOTAL_ROUNDS ? nextRound : 0,
         current_step: 0,
-        status: nextRound <= 8 ? 'round_intro' : 'lobby',
+        status: nextRound <= TOTAL_ROUNDS ? 'round_intro' : 'lobby',
         accepting_answers: false, show_scoreboard: false, step_data: {}, timer_started_at: null,
       })}>
         {nextRound <= 8 ? `РАУНД ${nextRound} →` : 'В ЛОББИ'}

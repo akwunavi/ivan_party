@@ -3,6 +3,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Typewriter from './Typewriter'
+import { mediaSrc } from '../lib/paths'
 
 export default function MediaDisplay({ question, showText = true, typewriter = false, noAV = false, revealMedia = false, autoplayAudio = true }) {
   const { content_type, question_text, media_urls = [] } = question
@@ -47,7 +48,7 @@ export default function MediaDisplay({ question, showText = true, typewriter = f
 
       {/* АУДИО: плеера НЕТ — трек стартует сам через 2 сек, на экране пульсирующий значок */}
       {content_type === 'audio' && media_urls[0] && !noAV && (
-        <HiddenAudio src={media_urls[0]} enabled={autoplayAudio} />
+        <HiddenAudio src={mediaSrc(media_urls[0])} enabled={autoplayAudio} />
       )}
 
       {/* ВИДЕО (п.4): с флагом media_hidden видео скрыто — идёт только звук.
@@ -61,11 +62,12 @@ export default function MediaDisplay({ question, showText = true, typewriter = f
             <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 12, color: 'var(--accent)', letterSpacing: '0.25em' }}>
               ♪ ЗВУК ИЗ ВИДЕО
             </div>
-            <video src={media_urls[0]} controls autoPlay
-              style={{ width: '100%', height: 42 }} />
+            {/* Видео полностью скрыто (0 высоты) — играет только звук, кадр не виден */}
+            <video src={mediaSrc(media_urls[0])} controls autoPlay
+              style={{ width: '100%', height: 0, opacity: 0, position: 'absolute' }} />
           </div>
         ) : (
-          <video src={media_urls[0]} controls autoPlay
+          <video src={mediaSrc(media_urls[0])} controls autoPlay
             style={{ width: '100%', maxWidth: 900, maxHeight: '55vh', borderRadius: 4, border: '1px solid #222' }} />
         )
       )}
@@ -106,7 +108,7 @@ function ImageGrid({ urls }) {
           minHeight: 0, // важно: позволяет ячейке сжиматься внутри grid
         }}>
           <img
-            src={url}
+            src={mediaSrc(url)}
             alt={`img-${i + 1}`}
             style={{
               maxWidth: '100%',

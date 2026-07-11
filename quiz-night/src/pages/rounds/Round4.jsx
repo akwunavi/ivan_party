@@ -3,6 +3,7 @@ import { Slide, NavButtons } from '../../components/RoundShell'
 import { setPhase } from '../../lib/roundFlow'
 import { updateGameState, awardPoints, markAnswer } from '../../lib/gameActions'
 import { useAnswers } from '../../hooks/useAnswers'
+import { mediaSrc } from '../../lib/paths'
 
 // ═══ РАУНД 4: МУЗЫКАЛЬНАЯ СВОЯ ИГРА ═══
 // Клик по плитке → модалка: сразу играет трек, идёт обратный отсчёт,
@@ -15,11 +16,12 @@ export const ROUND4 = {
   clipSeconds: 30,
   rules: [
     '6 тем, в каждой 4 отрывка стоимостью 0.5 / 1 / 1.5 / 2 балла',
-    'Команда называет плитку — ведущий её запускает',
+    'Играет по одному человеку от команды',
+    'Выбираете плитку — я её запускаю',
     'Отрывок играет 30 секунд',
-    'Ответ можно отправить сразу, как заиграла музыка',
+    'Баллы заберет игрок команды, отправивший правильный ответ первым>',
   ],
-  themes: [
+   themes: [
     { name: 'РУССКИЙ РОК', hint: 'только русский рок', tiles: [
       { value: 0.5, audio: '/media/song_1_1.mp3', correct_answer: '—' },
       { value: 1,   audio: '/media/song_1_2.mp3', correct_answer: '—' },
@@ -50,6 +52,7 @@ export const ROUND4 = {
     ]},
   ],
 }
+
 
 export default function Round4({ gameState }) {
   const { status, step_data = {} } = gameState
@@ -97,7 +100,7 @@ export default function Round4({ gameState }) {
   )
 
   return (
-    <div className="full-screen grid-bg flex-col" style={{ padding: '24px 40px', gap: 16, position: 'relative' }}>
+    <div className="grid-bg flex-col" style={{ height: '100vh', overflow: 'hidden', padding: '24px 40px', gap: 16, display: 'flex', position: 'relative' }}>
       <div style={{ flexShrink: 0 }}>
         <div style={{
           fontFamily: 'Russo One, sans-serif', fontSize: 'clamp(40px, 5vw, 72px)',
@@ -108,34 +111,17 @@ export default function Round4({ gameState }) {
         <div className="gradient-underline" style={{ marginTop: 8 }} />
       </div>
 
-      {/* Сетка */}
+      {/* Сетка — полностью статичная: фикс. высота шапки и плиток, ничего не может «прыгнуть» */}
       <div style={{
-        flex: 1, display: 'grid',
+        flex: 1, minHeight: 0, display: 'grid',
         gridTemplateColumns: `repeat(${ROUND4.themes.length}, minmax(0, 1fr))`,
+        gridTemplateRows: `100px repeat(${Math.max(...ROUND4.themes.map(t => t.tiles.length))}, 1fr)`,
         gap: 10,
       }}>
         {ROUND4.themes.map((theme, t) => (
-          <div key={t} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={T.themeHead}>
-              {theme.name}
-              {theme.hint && <div style={T.themeHint}>{theme.hint}</div>}
-            </div>
-            {theme.tiles.map((tile, i) => {
-              const key = `${t}-${i}`
-              const isOpened = opened.includes(key)
-              return (
-                <button key={i} className="jeopardy-tile" onClick={() => openTile(t, i)} disabled={isOpened} style={{
-                  flex: 1, cursor: isOpened ? 'default' : 'pointer',
-                  border: `1px solid ${isOpened ? '#1a1a1a' : '#333'}`,
-                  background: isOpened ? '#0a0a0a' : '#111',
-                  color: isOpened ? '#2a2a2a' : '#fff',
-                  fontFamily: 'Orbitron, Share Tech Mono, monospace', fontSize: 'clamp(18px, 2.2vw, 32px)', fontWeight: 700,
-                  transition: 'all 0.2s',
-                }}>
-                  {isOpened ? '·' : tile.value}
-                </button>
-              )
-            })}
+          <div key={t} style={T.themeHead}>
+            {theme.name}
+            {theme.hint && <div style={T.themeHint}>{theme.hint}</div>}
           </div>
         ))}
         {ROUND4.themes.map((theme, t) => (
@@ -190,7 +176,7 @@ function TileModal({ active, onClose }) {
     clearInterval(intervalRef.current)
 
     if (!tile?.audio) { setPlaying(false); return }
-    const audio = new Audio(tile.audio)
+    const audio = new Audio(mediaSrc(tile.audio))
     audioRef.current = audio
     setRemaining(ROUND4.clipSeconds)
     setPlaying(true)
@@ -307,11 +293,11 @@ const T = {
   rule: { display: 'flex', gap: 14, alignItems: 'flex-start', fontFamily: 'Inter, sans-serif', fontSize: 24, color: '#ddd', lineHeight: 1.65 },
   num: { color: '#ea580c', fontFamily: 'Share Tech Mono, monospace', fontSize: 12, marginTop: 4 },
   themeHead: {
-    fontFamily: 'Russo One, Rajdhani, sans-serif', fontSize: 'clamp(16px, 2vw, 28px)',
+    fontFamily: 'Russo One, Rajdhani, sans-serif', fontSize: 'clamp(15px, 1.8vw, 24px)',
     textAlign: 'center', color: '#ea580c',
-    padding: '12px 6px', border: '1px solid #333', background: '#0d0d0d',
+    padding: '10px 6px', border: '1px solid #333', background: '#0d0d0d',
     letterSpacing: '0.03em',
-    minHeight: 86, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+    height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center',
     overflow: 'hidden',
   },
   themeHint: {

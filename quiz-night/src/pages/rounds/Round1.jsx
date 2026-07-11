@@ -7,7 +7,7 @@ export const ROUND1 = {
   titleLines: ['ФИЛЬМЫ', 'И СЕРИАЛЫ'],
   metaLine: '10 ВОПРОСОВ · 30 СЕК · 1 БАЛЛ',
   timerSeconds: 30,
-  hasRepeats: true,            // ← сам включаешь/выключаешь
+  hasRepeats: false,            // ← сам включаешь/выключаешь
   autoAdvanceQuestions: true, // вопросы листает ведущий
   rules: [
     '10 вопросов о фильмах и сериалах',

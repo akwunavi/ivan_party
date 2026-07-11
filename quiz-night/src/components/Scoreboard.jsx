@@ -7,7 +7,6 @@ import { DISABLED_ROUNDS, TOTAL_ROUNDS } from '../lib/roundsRegistry'
 
 export default function Scoreboard({ roundNumber }) {
   const teams = useTeams()
-  const sorted = [...teams].sort((a, b) => b.total_score - a.total_score)
 
   // П.5: раскрытие интригой — с последнего места, по одной команде каждые 2.2с.
   // Новая (более высокая) строка появляется СВЕРХУ, сдвигая предыдущие вниз.
@@ -31,6 +30,15 @@ export default function Scoreboard({ roundNumber }) {
     const t = setInterval(load, 3000)
     return () => { stop = true; clearInterval(t) }
   }, [])
+
+  // П.1: итог считаем ТОЛЬКО по боевым раундам — разогрев (Р0) не попадает
+  // ни в сумму, ни в распределение мест, что бы ни лежало в total_score.
+  const battleTotal = (teamId) =>
+    Object.entries(byRound[teamId] || {})
+      .filter(([rn]) => Number(rn) >= 1 && Number(rn) <= TOTAL_ROUNDS)
+      .reduce((s, [, pts]) => s + pts, 0)
+
+  const sorted = [...teams].sort((a, b) => battleTotal(b.id) - battleTotal(a.id))
   useEffect(() => {
     setRevealedCount(0)
     if (sorted.length === 0) return
@@ -118,7 +126,7 @@ export default function Scoreboard({ roundNumber }) {
                     )
                   })}
                   <td style={{ ...T.cell, textAlign: 'center', fontFamily: 'Orbitron, monospace', fontSize: 38, fontWeight: 700, color: 'var(--accent)', textShadow: '0 0 16px rgba(234,88,12,0.4)' }}>
-                    {Number(team.total_score) % 1 === 0 ? team.total_score : Number(team.total_score).toFixed(1)}
+                    {battleTotal(team.id) % 1 === 0 ? battleTotal(team.id) : battleTotal(team.id).toFixed(1)}
                   </td>
                 </tr>
               )

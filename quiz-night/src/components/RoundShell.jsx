@@ -14,6 +14,7 @@ import { advance, goBack, setPhase } from '../lib/roundFlow'
 import { startTimer, awardPoints, markAnswer } from '../lib/gameActions'
 import { isFuzzyMatch, letterEq } from '../lib/answerCheck'
 import { supabase } from '../lib/supabase'
+import { mediaSrc } from '../lib/paths'
 import { useAnswers } from '../hooks/useAnswers'
 import { useTeams } from '../hooks/useTeams'
 import MediaDisplay from './MediaDisplay'
@@ -66,7 +67,7 @@ export default function RoundShell({ gameState, config, renderQuestion }) {
       if (q?.voice_audio) {
         setTtsRunning(true)
         await new Promise(resolve => {
-          const audio = new Audio(q.voice_audio)
+          const audio = new Audio(mediaSrc(q.voice_audio))
           audio.onended = resolve
           audio.onerror = resolve
           audio.play().catch(resolve)
@@ -309,7 +310,7 @@ export function ShowAnswers({ gameState, config, isAdminView = false, answers = 
   // Трек-ответ (Р2 «песни в картинках») — только на проекторе
   useEffect(() => {
     if (!revealed || !q?.answer_audio || isAdminView) return
-    const audio = new Audio(q.answer_audio)
+    const audio = new Audio(mediaSrc(q.answer_audio))
     audio.volume = 0.8
     audio.play().catch(() => {})
     return () => audio.pause()

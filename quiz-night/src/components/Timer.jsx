@@ -16,8 +16,6 @@ export default function Timer({ seconds, onComplete, autoStart = false }) {
       setRemaining(prev => {
         if (prev <= 1) {
           clearInterval(intervalRef.current)
-          setRunning(false)
-          onComplete?.()
           return 0
         }
         return prev - 1
@@ -25,6 +23,15 @@ export default function Timer({ seconds, onComplete, autoStart = false }) {
     }, 1000)
     return () => clearInterval(intervalRef.current)
   }, [running])
+
+  // onComplete вызывается отдельным эффектом, когда remaining реально дошёл до 0 —
+  // не внутри updater-функции setState (это и вызывало React-варнинг).
+  useEffect(() => {
+    if (remaining === 0 && running) {
+      setRunning(false)
+      onComplete?.()
+    }
+  }, [remaining])
 
   const pct = (remaining / seconds) * 100
   const isLow = remaining <= 10
