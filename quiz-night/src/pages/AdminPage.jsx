@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { pointsLabel } from '../lib/paths'
 import { useGameState } from '../hooks/useGameState'
 import { useTeams } from '../hooks/useTeams'
 import { useAnswers } from '../hooks/useAnswers'
@@ -39,7 +40,7 @@ export default function AdminPage() {
 function AdminPanel() {
   const { gameState } = useGameState()
   const teams = useTeams()
-  const answers = useAnswers(gameState?.current_round)
+  const [answers, refetchAnswers] = useAnswers(gameState?.current_round)
 
   if (!gameState) return <div style={A.center}>// ЗАГРУЗКА...</div>
 
@@ -68,8 +69,17 @@ function AdminPanel() {
         <RoundPicker current={round} />
       )}
 
-      {gameState.status !== 'lobby' && (
-        <AdminRoundView gameState={gameState} config={config} round={round} teams={teams} answers={answers} />
+      {gameState.status === 'finale' && (
+        <div style={{ padding: 24, textAlign: 'center' }}>
+          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 22, color: '#ea580c', marginBottom: 12 }}>
+            ИГРА ЗАВЕРШЕНА
+          </div>
+          <div style={A.dim}>Финальные итоги показаны на проекторе</div>
+        </div>
+      )}
+
+      {gameState.status !== 'lobby' && gameState.status !== 'finale' && (
+        <AdminRoundView gameState={gameState} config={config} round={round} teams={teams} answers={answers} refetchAnswers={refetchAnswers} />
       )}
     </div>
   )
@@ -93,7 +103,7 @@ function RoundPicker({ current }) {
   )
 }
 
-function AdminRoundView({ gameState, config, round, teams, answers }) {
+function AdminRoundView({ gameState, config, round, teams, answers, refetchAnswers }) {
   const [showRoundSwitch, setShowRoundSwitch] = useState(false)
   const { status } = gameState
 
@@ -146,14 +156,9 @@ function AdminRoundView({ gameState, config, round, teams, answers }) {
         </div>
       )}
 
-      {round === 6 && (status === 'answer_time' || status === 'show_answers') && (
+      {round === 6 && status === 'show_answers' && (
         <div style={{ padding: '0 16px 16px' }}>
-          <div style={A.dim}>УДВОЕНИЕ (ТЕМА УГАДАНА)</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
-            {teams.map(t => (
-              <button key={t.id} onClick={() => doubleRoundScore(t.id, 6)} style={A.btn(t.color)}>×2 · {t.name}</button>
-            ))}
-          </div>
+          <div style={A.dim}>УДВОЕНИЕ ЗА УГАДАННУЮ ТЕМУ СЧИТАЕТСЯ АВТОМАТИЧЕСКИ НА ФИНАЛЬНОМ ВОПРОСЕ</div>
         </div>
       )}
 
@@ -176,7 +181,12 @@ function AdminRoundView({ gameState, config, round, teams, answers }) {
         {config && status !== 'show_answers' && !config.themes && (
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={() => goBack(gameState, config)} style={A.btn('#555')}>← НАЗАД</button>
-            <button onClick={() => advance(gameState, config)} style={A.btn('#ea580c')}>ДАЛЬШЕ →</button>
+            <button onClick={async () => {
+              // Перед уходом с "Время ответов" — свежая проверка доставки,
+              // не полагаемся на последний фоновый опрос (до 2 сек устаревания)
+              if (status === 'answer_time') await refetchAnswers?.()
+              advance(gameState, config)
+            }} style={A.btn('#ea580c')}>ДАЛЬШЕ →</button>
           </div>
         )}
         {config?.themes && status !== 'round_intro' && status !== 'rules' && (
@@ -289,7 +299,7 @@ function QuestionTextOnly({ gameState, config }) {
     const active = gameState.step_data?.active
     if (active) {
       const [t, i] = active.split('-').map(Number)
-      return <Centered><div style={A.h1}>{config.themes[t]?.name}<br/>{config.themes[t]?.tiles[i]?.value} балла</div></Centered>
+      return <Centered><div style={A.h1}>{config.themes[t]?.name}<br/>{config.themes[t]?.tiles[i]?.value} {pointsLabel(config.themes[t]?.tiles[i]?.value)}</div></Centered>
     }
     return <Centered><div style={A.dim}>ЖДЁМ ВЫБОРА ПЛИТКИ</div></Centered>
   }

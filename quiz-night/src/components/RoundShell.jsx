@@ -11,7 +11,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { speak, stopSpeech } from '../lib/tts'
 import { advance, goBack, setPhase } from '../lib/roundFlow'
-import { startTimer, awardPoints, markAnswer } from '../lib/gameActions'
+import { startTimer, awardPoints, markAnswer, doubleRoundScore } from '../lib/gameActions'
 import { isFuzzyMatch, letterEq } from '../lib/answerCheck'
 import { supabase } from '../lib/supabase'
 import { mediaSrc } from '../lib/paths'
@@ -22,7 +22,7 @@ import Typewriter from './Typewriter'
 import Timer from './Timer'
 
 export default function RoundShell({ gameState, config, renderQuestion }) {
-  const answers = useAnswers(gameState.current_round)
+  const [answers, refetchAnswers] = useAnswers(gameState.current_round)
   const { status, current_step: step } = gameState
   const questions = config.questions
   const q = questions[Math.min(step, questions.length - 1)]
@@ -34,8 +34,11 @@ export default function RoundShell({ gameState, config, renderQuestion }) {
   // ── Фоновая музыка, пока тикает таймер ──
   useEffect(() => {
     if (!timerActive) { musicRef.current?.pause(); return }
-    // П.2: в вопросах с собственным аудио/видео фоновая музыка не играет
+    // Вопросы с собственным аудио/видео — без фоновой музыки
     if (q?.content_type === 'audio' || q?.content_type === 'video') return
+    // Защита от дублей: скрытая вкладка (случайно открытый второй проектор)
+    // не воспроизводит ничего — звук ведёт только видимая вкладка
+    if (document.hidden) return
     const audio = new Audio('./media/song.mp3')
     audio.loop = true
     audio.volume = 0.6
@@ -53,6 +56,7 @@ export default function RoundShell({ gameState, config, renderQuestion }) {
 
     async function run() {
       if (status !== 'question' && status !== 'repeat') return
+      if (document.hidden) return  // фоновый дубль проектора молчит и не трогает таймер
       // Интро блока: без озвучки и таймера; в повторах пропускаем сразу
       if (q?.block_intro) {
         if (status === 'repeat') setTimeout(() => advance(gameState, config), 300)
@@ -197,7 +201,7 @@ export default function RoundShell({ gameState, config, renderQuestion }) {
   )
 
   if (status === 'answer_time') return (
-    <AnswerTimeSlide config={config} onBack={back} onNext={next} answers={answers} roundNumber={gameState.current_round} />
+    <AnswerTimeSlide config={config} onBack={back} onNext={next} onRefetch={refetchAnswers} answers={answers} roundNumber={gameState.current_round} />
   )
 
   if (status === 'show_answers') {
@@ -243,8 +247,10 @@ export function ShowAnswers({ gameState, config, isAdminView = false, answers = 
     }
 
     const stake = Number(a.stake ?? 0)
+    const isFinal = config.questions[Number(a.question_ref.split('-q')[1])]?.is_final_question
     let delta
     if (ptsOverride != null) delta = correct ? ptsOverride : 0
+    else if (isFinal) delta = 0  // финальный вопрос (угадай тему) сам по себе баллов не даёт — только триггерит удвоение ниже
     else if (config.stakesRound) delta = correct ? stake + 1 : -stake
     else delta = correct ? (config.pointsPerQuestion ?? 1) : 0
     await markAnswer(a.id, correct, delta)
@@ -260,6 +266,14 @@ export function ShowAnswers({ gameState, config, isAdminView = false, answers = 
       if (correctCount === blockRefs.length) {
         await awardPoints(a.team_id, round, `r${round}-block${block}-bonus`, config.blockBonus ?? 1, 'block_bonus')
       }
+    }
+
+    // Тематический раунд (П.4): если команда угадала тему (финальный вопрос,
+    // is_final_question) — все баллы, набранные в этом раунде, удваиваются
+    // автоматически. Никакой ручной кнопки ×2 больше нет — это раньше и
+    // приводило к путанице/неверному итогу, когда её забывали нажать.
+    if (config.questions[qiForBonus]?.is_final_question && correct) {
+      await doubleRoundScore(a.team_id, round)
     }
   }
 
@@ -364,17 +378,7 @@ export function ShowAnswers({ gameState, config, isAdminView = false, answers = 
               </div>
               {config.number === 2 && q.word1 && q.word2 && <RebusDecode word1={q.word1} word2={q.word2} />}
               {Array.isArray(q.correct_answer) ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start' }}>
-                  {q.correct_answer.map((line, li) => (
-                    <div key={li} style={{
-                      fontFamily: 'Rajdhani, sans-serif', fontSize: 'clamp(24px, 2.8vw, 38px)', fontWeight: 700,
-                      color: '#22c55e', display: 'flex', gap: 14, alignItems: 'baseline',
-                    }}>
-                      <span style={{ fontFamily: 'Orbitron, monospace', fontSize: '0.8em', color: 'var(--accent)' }}>{li + 1}</span>
-                      {line}
-                    </div>
-                  ))}
-                </div>
+                <StaggeredList lines={q.correct_answer} stepKey={step} />
               ) : (
                 <Typewriter text={q.correct_answer || q.correct_choice} speed={45} style={{
                   fontFamily: 'Russo One, Rajdhani, sans-serif', fontSize: 'clamp(32px, 4vw, 54px)',
@@ -452,6 +456,37 @@ export function ShowAnswers({ gameState, config, isAdminView = false, answers = 
   )
 }
 
+// Постепенное раскрытие ответа для сопоставлений/порядков: по одной строке
+// каждые 3 секунды — а не всё разом. Сбрасывается при переходе на новый вопрос (stepKey).
+function StaggeredList({ lines, stepKey }) {
+  const [count, setCount] = useState(0)
+  useEffect(() => {
+    setCount(0)
+    if (!lines?.length) return
+    const interval = setInterval(() => {
+      setCount(prev => {
+        if (prev >= lines.length) { clearInterval(interval); return prev }
+        return prev + 1
+      })
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [lines, stepKey])
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start' }}>
+      {lines.slice(0, count).map((line, li) => (
+        <div key={li} className="reveal-up" style={{
+          fontFamily: 'Rajdhani, sans-serif', fontSize: 'clamp(24px, 2.8vw, 38px)', fontWeight: 700,
+          color: '#22c55e', display: 'flex', gap: 14, alignItems: 'baseline',
+        }}>
+          <span style={{ fontFamily: 'Orbitron, monospace', fontSize: '0.8em', color: 'var(--accent)' }}>{li + 1}</span>
+          {line}
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // Расшифровка ребуса Р6: КорабЛИК + ВИНоград → подсвечены ЛИК и ВИН
 function RebusDecode({ word1, word2 }) {
   const hl = { color: 'var(--accent)', borderBottom: '3px solid var(--accent)' }
@@ -478,9 +513,11 @@ function gradeBtnStyle(color, activeMark, graded) {
 }
 
 // ═══ ВРЕМЯ ОТВЕТОВ: минутный таймер + фоновая музыка ═══
-function AnswerTimeSlide({ config, onBack, onNext, answers = [], roundNumber }) {
+function AnswerTimeSlide({ config, onBack, onNext, onRefetch, answers = [], roundNumber }) {
   const seconds = config.answerTimeSeconds ?? 60
   const teams = useTeams()
+  const [checking, setChecking] = useState(false)
+  const isHiddenTab = typeof document !== 'undefined' && document.hidden
   const totalQ = config.questions.filter(q => !q.block_intro).length
   // сколько НЕПУСТЫХ ответов прислала каждая команда в этом раунде
   const summary = teams.map(t => ({
@@ -488,12 +525,24 @@ function AnswerTimeSlide({ config, onBack, onNext, answers = [], roundNumber }) 
     got: answers.filter(a => a.team_id === t.id && a.answer_text?.trim()).length,
   }))
   useEffect(() => {
+    if (document.hidden) return  // скрытый дубль вкладки не играет
     const audio = new Audio('./media/song.mp3')
     audio.loop = true
     audio.volume = 0.6
     audio.play().catch(() => {})
     return () => audio.pause()
   }, [])
+
+  // П.1: перед реальным переходом делаем СВЕЖИЙ запрос к базе, а не полагаемся
+  // на последний фоновый опрос (которому может быть до 2 сек) — так ведущий
+  // видит актуальную картину «долетело / не долетело» прямо перед решением.
+  async function handleNext() {
+    setChecking(true)
+    await onRefetch?.()
+    setChecking(false)
+    onNext()
+  }
+
   return (
     <Slide>
       <div className="mono-tag" style={{ fontSize: 16 }}>РАУНД {pad(config.number)} :: ВРЕМЯ ОТВЕТОВ</div>
@@ -502,7 +551,7 @@ function AnswerTimeSlide({ config, onBack, onNext, answers = [], roundNumber }) 
       <div style={{ maxWidth: 600, width: '100%' }}>
         <Timer seconds={seconds} autoStart />
       </div>
-      {/* П.1: контроль связи — видно, чьи ответы долетели */}
+      {/* Контроль связи — видно, чьи ответы долетели */}
       <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center' }}>
         {summary.map(({ team, got }) => (
           <div key={team.id} style={{
@@ -514,7 +563,7 @@ function AnswerTimeSlide({ config, onBack, onNext, answers = [], roundNumber }) 
           </div>
         ))}
       </div>
-      <NavButtons onBack={onBack} onNext={onNext} nextLabel="К ОТВЕТАМ →" />
+      <NavButtons onBack={onBack} onNext={handleNext} nextLabel={checking ? 'ПРОВЕРЯЮ ОТВЕТЫ...' : 'К ОТВЕТАМ →'} />
     </Slide>
   )
 }

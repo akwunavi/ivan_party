@@ -32,6 +32,7 @@ export default function PlayerPage() {
 
   if (status === 'lobby') return <Waiting team={team} message="ОЖИДАЕМ НАЧАЛА ИГРЫ" />
   if (status === 'scoreboard') return <Waiting team={team} message="ПОДВОДИМ ИТОГИ..." />
+  if (status === 'finale') return <Waiting team={team} message="ИГРА ЗАВЕРШЕНА" sub="Спасибо за игру! Смотри на проектор 🎉" />
   if (status === 'break') return <Waiting team={team} message="ПЕРЕРЫВ 10 МИНУТ" sub="Разомнись, налей выпить :)" />
   if (status === 'round_intro' || status === 'rules') return <Waiting team={team} message={`РАУНД ${current_round}`} sub="Слушай правила" />
   if (status === 'show_answers') return <PlayerReview team={team} gameState={gameState} />
@@ -104,6 +105,16 @@ function AnswerForm({ team, gameState }) {
   const uniqueStakes = isStakes && round === 5 // каждая ставка 1 раз
   const collapsible = round === 3 || round === 5 // ответы спрятаны под шевроном
   const [openIdx, setOpenIdx] = useState(null)
+
+  // Автораскрытие текущего вопроса: как только ведущий перешёл к вопросу N,
+  // шеврон N сам открывается на телефоне. Ответы на ДРУГИХ вопросах (state.answers)
+  // при этом не трогаются — меняется только то, какая карточка развёрнута визуально.
+  useEffect(() => {
+    if (!collapsible) return
+    if (gameState.status === 'question' || gameState.status === 'repeat') {
+      setOpenIdx(gameState.current_step)
+    }
+  }, [collapsible, gameState.status, gameState.current_step])
 
   const storageKey = `quiz_answers_r${round}`
   const [state, setState] = useState(() => {
@@ -366,63 +377,69 @@ function AnswerForm({ team, gameState }) {
   )
 }
 
-// ═══ ВОПРОС «СОПОСТАВЬ» (цифра ↔ буква): тапаешь левый, потом правый — пара фиксируется ═══
+// ═══ ВОПРОС «СОПОСТАВЬ» ═══
+// Цифры СЛЕВА — фиксированные позиции (порядковый номер картинки или пункта),
+// капитан только подставляет БУКВУ к каждой цифре через компактный выбор.
+// Работает одинаково для текстовых пар и для пар с картинками — если у вопроса
+// есть media_urls, картинки уже показаны сверху через MediaDisplay с номерами
+// в углу (см. ImageGrid), этот компонент просто сопоставляет номер → букву.
+//
 // q.match_pairs = { left: ['1','2','3'], right: ['А','Б','В'] }
-// Ответ хранится строкой вида "1А,2Б,3В" — по одной паре через запятую.
+// Ответ хранится строкой вида "1А,2Б,3В" — по одной паре, без разделителей внутри.
 function MatchPicker({ q, value, locked, onChange, onClear }) {
   const pairs = value ? value.split(',').filter(Boolean) : []
-  const usedLeft = pairs.map(p => p[0])
+  const assigned = Object.fromEntries(pairs.map(p => [p[0], p.slice(1)]))
   const usedRight = pairs.map(p => p.slice(1))
-  const [selectedLeft, setSelectedLeft] = useState(null)
 
-  function tapLeft(l) {
-    if (locked || usedLeft.includes(l)) return
-    setSelectedLeft(l === selectedLeft ? null : l)
-  }
-  function tapRight(r) {
-    if (locked || usedRight.includes(r) || !selectedLeft) return
-    onChange([...pairs, `${selectedLeft}${r}`].join(','))
-    setSelectedLeft(null)
+  function assign(left, right) {
+    if (locked) return
+    const next = { ...assigned }
+    if (right == null) delete next[left]
+    else next[left] = right
+    const nextPairs = q.match_pairs.left
+      .filter(l => next[l])
+      .map(l => `${l}${next[l]}`)
+    onChange(nextPairs.join(','))
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: '#555' }}>
-        {selectedLeft ? `ВЫБРАНО: ${selectedLeft} → ТАПНИ ПАРУ СПРАВА` : 'ТАПНИ ЭЛЕМЕНТ СЛЕВА, ПОТОМ ПАРУ СПРАВА'}
+        ПОДСТАВЬ БУКВУ К КАЖДОМУ НОМЕРУ
       </div>
-      <div style={{ display: 'flex', gap: 20 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
-          {q.match_pairs.left.map(l => (
-            <button key={l} disabled={locked || usedLeft.includes(l)} onClick={() => tapLeft(l)} style={{
-              padding: '10px 14px', border: `2px solid ${selectedLeft === l ? '#ea580c' : usedLeft.includes(l) ? '#1a1a1a' : '#333'}`,
-              background: 'transparent', color: usedLeft.includes(l) ? '#333' : selectedLeft === l ? '#ea580c' : '#ccc',
-              fontFamily: 'Orbitron, monospace', fontSize: 18, fontWeight: 700, cursor: 'pointer',
-            }}>{l}</button>
-          ))}
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
-          {q.match_pairs.right.map(r => (
-            <button key={r} disabled={locked || usedRight.includes(r)} onClick={() => tapRight(r)} style={{
-              padding: '10px 14px', border: `2px solid ${usedRight.includes(r) ? '#1a1a1a' : '#333'}`,
-              background: 'transparent', color: usedRight.includes(r) ? '#333' : '#ccc',
-              fontFamily: 'Rajdhani, sans-serif', fontSize: 18, fontWeight: 700, cursor: 'pointer', textAlign: 'left',
-            }}>{r}</button>
-          ))}
-        </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {q.match_pairs.left.map(l => (
+          <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{
+              width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              border: '2px solid #333', color: '#888',
+              fontFamily: 'Orbitron, monospace', fontSize: 18, fontWeight: 700, flexShrink: 0,
+            }}>{l}</div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', flex: 1 }}>
+              {q.match_pairs.right.map(r => {
+                const takenByOther = usedRight.includes(r) && assigned[l] !== r
+                const selected = assigned[l] === r
+                return (
+                  <button key={r} disabled={locked || takenByOther}
+                    onClick={() => assign(l, selected ? null : r)}
+                    style={{
+                      padding: '8px 14px',
+                      border: `2px solid ${selected ? '#22c55e' : takenByOther ? '#1a1a1a' : '#333'}`,
+                      background: selected ? 'rgba(34,197,94,0.1)' : 'transparent',
+                      color: takenByOther ? '#333' : selected ? '#22c55e' : '#ccc',
+                      fontFamily: 'Rajdhani, sans-serif', fontSize: 16, fontWeight: 700, cursor: locked || takenByOther ? 'default' : 'pointer',
+                    }}>{r}</button>
+                )
+              })}
+            </div>
+          </div>
+        ))}
       </div>
-      {pairs.length > 0 && (
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          {pairs.map((p, idx) => (
-            <span key={idx} style={{
-              padding: '6px 12px', border: '1px solid #22c55e', color: '#22c55e',
-              fontFamily: 'Orbitron, monospace', fontSize: 14,
-            }}>{p[0]} → {p.slice(1)}</span>
-          ))}
-          {!locked && <button onClick={onClear} style={{
-            padding: '8px 12px', border: '1px solid #333', background: 'transparent',
-            color: '#888', cursor: 'pointer', fontFamily: 'Share Tech Mono, monospace', fontSize: 11,
-          }}>СБРОС</button>}
-        </div>
+      {pairs.length > 0 && !locked && (
+        <button onClick={onClear} style={{
+          padding: '8px 12px', border: '1px solid #333', background: 'transparent',
+          color: '#888', cursor: 'pointer', fontFamily: 'Share Tech Mono, monospace', fontSize: 11, alignSelf: 'flex-start',
+        }}>✕ СБРОСИТЬ ВСЁ</button>
       )}
     </div>
   )

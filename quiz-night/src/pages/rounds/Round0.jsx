@@ -14,6 +14,7 @@ export const ROUND0 = {
     'Вопросы из прошлых игр — просто тренируемся',
     'Тренируемся отправлять ответы, смотрим как работает',
     'Результат этого раунда никуда не идёт — можно расслабиться',
+    'Если страница не открывается - включаем VPN',
   ],
   questions: [
     {
@@ -41,6 +42,13 @@ export const ROUND0 = {
       media_urls: [],
       choices: null,
       correct_answer: 'Вокруг света за 80 дней',
+    },
+        {
+      content_type: 'video',
+      question_text: 'Заставку к какому сериалу вы слышите?',
+      media_urls: ['/media/r0.1.mp4'],
+      media_hidden: true,
+      correct_answer: 'Зачарованные',
     },
   ],
 }

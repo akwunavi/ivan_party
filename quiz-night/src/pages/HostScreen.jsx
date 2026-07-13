@@ -1,7 +1,9 @@
 import { useGameState } from '../hooks/useGameState'
+import { updateGameState } from '../lib/gameActions'
 import Lobby from './Lobby'
 import Scoreboard from '../components/Scoreboard'
 import BreakScreen from '../components/BreakScreen'
+import FinaleScreen from '../components/FinaleScreen'
 import Round0 from './rounds/Round0'
 import Round1 from './rounds/Round1'
 import Round2 from './rounds/Round2'
@@ -29,6 +31,7 @@ export default function HostScreen() {
 
   if (gameState.status === 'scoreboard') return <Scoreboard roundNumber={gameState.current_round} />
   if (gameState.status === 'break') return <BreakScreen gameState={gameState} />
+  if (gameState.status === 'finale') return <FinaleScreen onBackToLobby={() => updateGameState({ status: 'lobby' })} />
   if (gameState.status === 'lobby') return <Lobby />
 
   const Round = ROUNDS[gameState.current_round]

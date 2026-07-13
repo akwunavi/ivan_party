@@ -3,7 +3,7 @@ import { Slide, NavButtons } from '../../components/RoundShell'
 import { setPhase } from '../../lib/roundFlow'
 import { updateGameState, awardPoints, markAnswer } from '../../lib/gameActions'
 import { useAnswers } from '../../hooks/useAnswers'
-import { mediaSrc } from '../../lib/paths'
+import { mediaSrc, pointsLabel } from '../../lib/paths'
 
 // ═══ РАУНД 4: МУЗЫКАЛЬНАЯ СВОЯ ИГРА ═══
 // Клик по плитке → модалка: сразу играет трек, идёт обратный отсчёт,
@@ -39,7 +39,7 @@ export const ROUND4 = {
       { value: 1.5, audio: '/media/song_3_3.mp3', correct_answer: '—' }, { value: 2, audio: '/media/song_3_4.mp3', correct_answer: 'Muse' },
     ]},
     { name: 'РУССКАЯ РУЛЕТКА', hint: 'всё что угодно', tiles: [
-      { value: 0.5, audio: '/media/song_4_1.mp3', correct_answer: '—' }, { value: 1, audio: '/media/song_4_2.mp3', correct_answer: '—' },
+      { value: 0.5, audio: '/media/song_4_1.mp3', correct_answer: '—' }, { value: 1, audio: '/media/song_4_2.mp3', correct_answer: 'Нюша' },
       { value: 1.5, audio: '/media/song_4_3.mp3', correct_answer: '—' }, { value: 2, audio: '/media/song_4_4.mp3', correct_answer: '—' },
     ]},
     { name: 'Я БЫЛ НА ЕВРОВИДЕНИИ', hint: '', tiles: [
@@ -52,7 +52,6 @@ export const ROUND4 = {
     ]},
   ],
 }
-
 
 export default function Round4({ gameState }) {
   const { status, step_data = {} } = gameState
@@ -158,7 +157,7 @@ function TileModal({ active, onClose }) {
   const [t, i] = active.split('-').map(Number)
   const theme = ROUND4.themes[t]
   const tile = theme?.tiles[i]
-  const answers = useAnswers(4)
+  const [answers] = useAnswers(4)
   const audioRef = useRef(null)
   const intervalRef = useRef(null)
   const [remaining, setRemaining] = useState(ROUND4.clipSeconds)
@@ -174,6 +173,7 @@ function TileModal({ active, onClose }) {
   function play() {
     audioRef.current?.pause()
     clearInterval(intervalRef.current)
+    if (document.hidden) return  // скрытый дубль вкладки не играет
 
     if (!tile?.audio) { setPlaying(false); return }
     const audio = new Audio(mediaSrc(tile.audio))
@@ -223,7 +223,7 @@ function TileModal({ active, onClose }) {
             <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 28, fontWeight: 700, color: '#ea580c' }}>
               {theme?.name}
             </div>
-            <div style={M.dim}>ПЛИТКА · {tile?.value} БАЛЛА</div>
+            <div style={M.dim}>ПЛИТКА · {tile?.value} {pointsLabel(tile?.value).toUpperCase()}</div>
           </div>
           {/* Отсчёт */}
           <div style={{
