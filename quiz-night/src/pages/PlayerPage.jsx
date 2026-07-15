@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useGameState } from '../hooks/useGameState'
 import { registerTeam } from '../lib/gameActions'
+import { useTeams } from '../hooks/useTeams'
 import { ROUND_CONFIGS } from '../lib/roundsRegistry'
+import { useAnswerQueue } from '../lib/answerQueue'
 
-const TEAM_COLORS = ['#ea580c', '#3b82f6', '#22c55e', '#a855f7']
+const TEAM_COLORS = ['#ea580c', '#3b82f6', '#22c55e', '#a855f7', '#ec4899', '#eab308', '#14b8a6', '#f43f5e']
 
 export default function PlayerPage() {
   const { gameState, loading } = useGameState()
@@ -50,6 +52,7 @@ function JeopardyForm({ team, gameState }) {
   const active = gameState.step_data?.active || null   // "t-i"
   const [text, setText] = useState('')
   const [sends, setSends] = useState(0)
+  const { send: queueSend, pendingCount, isOnline } = useAnswerQueue()
 
   useEffect(() => { setText(''); setSends(0) }, [active])
 
@@ -59,16 +62,16 @@ function JeopardyForm({ team, gameState }) {
   const theme = config.themes[t]
   const tile = theme?.tiles[i]
 
-  async function send() {
+  function submit() {
     if (!text.trim() || sends >= 2) return
-    await supabase.from('answers').upsert({
+    queueSend({
       team_id: team.id,
       game_id: gameState.game_id,
       question_ref: `r4-q${t}-${i}`,
       round_number: 4,
       answer_text: text.trim(),
       updated_at: new Date().toISOString(),
-    }, { onConflict: 'team_id,question_ref' })
+    })
     setSends(s => s + 1)
   }
 
@@ -78,6 +81,7 @@ function JeopardyForm({ team, gameState }) {
         <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 18, fontWeight: 700, color: team.color }}>{team.name}</div>
         <div style={P.headerMeta}>РАУНД 4</div>
       </div>
+      <ConnBanner isOnline={isOnline} pendingCount={pendingCount} />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 20, gap: 16 }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 24, fontWeight: 700, color: '#ea580c' }}>{theme?.name}</div>
@@ -85,7 +89,7 @@ function JeopardyForm({ team, gameState }) {
         </div>
         <textarea value={text} onChange={e => setText(e.target.value)} placeholder="Твой ответ..." rows={2}
           disabled={sends >= 2} style={{ ...P.textarea, opacity: sends >= 2 ? 0.5 : 1 }} />
-        <button onClick={send} disabled={sends >= 2 || !text.trim()} style={P.submitBtn(sends, !text.trim())}>
+        <button onClick={submit} disabled={sends >= 2 || !text.trim()} style={P.submitBtn(sends, !text.trim())}>
           {sends === 0 ? 'ОТПРАВИТЬ' : sends === 1 ? 'ИЗМЕНИТЬ' : '✓ ОТВЕТ ЗАФИКСИРОВАН'}
         </button>
         <div style={{ ...P.mono, textAlign: 'center', color: '#333' }}>КТО БЫСТРЕЕ — ВЕДУЩИЙ ВИДИТ ВРЕМЯ</div>
@@ -97,6 +101,13 @@ function JeopardyForm({ team, gameState }) {
 // ═══ ФОРМА ОТВЕТОВ ═══
 // Ответы и ставки хранятся локально (переживают перезагрузку телефона)
 // и отправляются в Supabase при каждом изменении.
+// Баннер связи: красный "нет связи" пока офлайн, оранжевый "досылаю N" пока в очереди что-то есть
+function ConnBanner({ isOnline, pendingCount }) {
+  if (isOnline && pendingCount === 0) return null
+  if (!isOnline) return <div className="conn-banner offline">⚠ НЕТ СВЯЗИ — ОТВЕТЫ СОХРАНЕНЫ, ДОШЛЁМ АВТОМАТИЧЕСКИ</div>
+  return <div className="conn-banner pending">↻ ДОСЫЛАЮ {pendingCount} ОТВЕТ{pendingCount === 1 ? '' : 'А'}...</div>
+}
+
 function AnswerForm({ team, gameState }) {
   const round = gameState.current_round
   const config = ROUND_CONFIGS[round]
@@ -105,6 +116,7 @@ function AnswerForm({ team, gameState }) {
   const uniqueStakes = isStakes && round === 5 // каждая ставка 1 раз
   const collapsible = round === 3 || round === 5 // ответы спрятаны под шевроном
   const [openIdx, setOpenIdx] = useState(null)
+  const { send, pendingCount, isOnline } = useAnswerQueue()
 
   // Автораскрытие текущего вопроса: как только ведущий перешёл к вопросу N,
   // шеврон N сам открывается на телефоне. Ответы на ДРУГИХ вопросах (state.answers)
@@ -142,7 +154,9 @@ function AnswerForm({ team, gameState }) {
   }
 
   async function push(qIdx, answer, stake) {
-    await supabase.from('answers').upsert({
+    // Отправка через очередь: если сеть моргнёт, запись не потеряется —
+    // останется в localStorage и дошлётся автоматически при восстановлении.
+    send({
       team_id: team.id,
       game_id: gameState.game_id,
       question_ref: `r${round}-q${qIdx}`,
@@ -150,7 +164,7 @@ function AnswerForm({ team, gameState }) {
       answer_text: answer,
       stake: stake,
       updated_at: new Date().toISOString(),
-    }, { onConflict: 'team_id,question_ref' })
+    })
   }
 
   // Текст набирается локально; в Supabase уходит только по кнопке.
@@ -221,6 +235,7 @@ function AnswerForm({ team, gameState }) {
         <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 18, fontWeight: 700, color: team.color }}>{team.name}</div>
         <div style={P.headerMeta}>РАУНД {round}</div>
       </div>
+      <ConnBanner isOnline={isOnline} pendingCount={pendingCount} />
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 14px', display: 'flex', flexDirection: 'column', gap: 14 }}>
         {!accepting && (
@@ -547,13 +562,25 @@ function PlayerReview({ team, gameState }) {
 
 // ═══ РЕГИСТРАЦИЯ ═══
 function Register({ onDone }) {
+  const teams = useTeams()
+  const takenColors = teams.map(t => t.color)
   const [name, setName] = useState('')
-  const [colorIdx, setColorIdx] = useState(0)
+  const [colorIdx, setColorIdx] = useState(() => TEAM_COLORS.findIndex(c => !takenColors.includes(c)))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
+  // П.4: если пока выбираешь имя кто-то другой занял твой цвет — переезжаем
+  // на следующий свободный автоматически, чтобы не отправить дублирующий выбор.
+  useEffect(() => {
+    if (colorIdx === -1 || takenColors.includes(TEAM_COLORS[colorIdx])) {
+      const free = TEAM_COLORS.findIndex(c => !takenColors.includes(c))
+      setColorIdx(free)
+    }
+  }, [teams.length])
+
   async function go() {
     if (!name.trim()) { setError('Введи название команды'); return }
+    if (colorIdx === -1) { setError('Все цвета заняты — обратись к ведущему'); return }
     setBusy(true); setError('')
     try {
       const t = await registerTeam(name.trim(), TEAM_COLORS[colorIdx])
@@ -569,13 +596,21 @@ function Register({ onDone }) {
       <div style={P.mono}>РЕГИСТРАЦИЯ КОМАНДЫ</div>
       <input value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === 'Enter' && go()}
         placeholder="Название команды" maxLength={30} style={P.input} />
-      <div style={{ display: 'flex', gap: 12 }}>
-        {TEAM_COLORS.map((c, i) => (
-          <button key={c} onClick={() => setColorIdx(i)} style={{
-            width: 36, height: 36, borderRadius: '50%', background: c,
-            border: colorIdx === i ? '3px solid #fff' : '2px solid transparent', cursor: 'pointer',
-          }} />
-        ))}
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 280 }}>
+        {TEAM_COLORS.map((c, i) => {
+          const taken = takenColors.includes(c)
+          return (
+            <button key={c} onClick={() => !taken && setColorIdx(i)} disabled={taken} style={{
+              width: 36, height: 36, borderRadius: '50%', background: c,
+              border: colorIdx === i ? '3px solid #fff' : '2px solid transparent',
+              cursor: taken ? 'not-allowed' : 'pointer',
+              opacity: taken ? 0.2 : 1,
+              position: 'relative',
+            }}>
+              {taken && <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: '#fff' }}>✕</span>}
+            </button>
+          )
+        })}
       </div>
       {error && <div style={{ color: '#ef4444', fontSize: 13 }}>{error}</div>}
       <button onClick={go} disabled={busy} style={P.primaryBtn}>

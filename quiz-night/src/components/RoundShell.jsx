@@ -8,7 +8,7 @@
 //
 // Вся правда — в gameState (Supabase). Никакого локального порядка.
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { speak, stopSpeech } from '../lib/tts'
 import { advance, goBack, setPhase } from '../lib/roundFlow'
 import { startTimer, awardPoints, markAnswer, doubleRoundScore } from '../lib/gameActions'
@@ -118,10 +118,10 @@ export default function RoundShell({ gameState, config, renderQuestion }) {
   if (status === 'rules') return (
     <Slide>
       <div className="mono-tag">РАУНД {pad(config.number)} :: ПРАВИЛА</div>
-      <div className="card hud-frame" style={{ maxWidth: 660, width: '100%' }}>
-        <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div className="card hud-frame" style={{ maxWidth: 780, width: '100%', maxHeight: '62vh', overflowY: 'auto' }}>
+        <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 14 }}>
           {config.rules.map((rule, i) => (
-            <li key={i} className="rule-line" style={{ ...S.ruleItem, animationDelay: `${i * 0.22}s` }}>
+            <li key={i} className="rule-line" style={{ ...S.ruleItem, animationDelay: `${i * 0.4}s` }}>
               <span style={S.ruleNum}>{pad(i + 1)}</span>{rule}
             </li>
           ))}
@@ -150,7 +150,7 @@ export default function RoundShell({ gameState, config, renderQuestion }) {
     }
 
     return (
-      <div className="full-screen grid-bg flex-col" style={{ padding: '28px 44px', gap: 18 }}>
+      <div className="grid-bg flex-col" style={{ height: '100vh', overflow: 'hidden', padding: '28px 44px', gap: 18, display: 'flex' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexShrink: 0 }}>
           <div>
             <div className="mono-tag" style={{ fontSize: 16, letterSpacing: '0.25em' }}>
@@ -356,15 +356,17 @@ export function ShowAnswers({ gameState, config, isAdminView = false, answers = 
       <div style={{ flex: 1, minHeight: 0, display: 'flex', gap: 28 }}>
         <div style={{ flex: showTeamColumn ? 1.4 : 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <MediaDisplay
-              noAV={isAdminView}
-              revealMedia={revealed}
-              autoplayAudio={q.answer_play_audio === true}
-              question={
-                revealed && q.answer_media_urls?.length
-                  ? { content_type: 'multi_image', media_urls: q.answer_media_urls, question_text: q.question_text }
-                  : q
-              } />
+            {!(q.match_pairs && revealed) && (
+              <MediaDisplay
+                revealMedia={revealed}
+                autoplayAudio={revealed && q.answer_play_audio === true}
+                noAV={isAdminView}
+                question={
+                  revealed && q.answer_media_urls?.length
+                    ? { content_type: 'multi_image', media_urls: q.answer_media_urls, question_text: q.question_text }
+                    : q
+                } />
+            )}
           </div>
 
           {revealed && (
@@ -377,7 +379,13 @@ export function ShowAnswers({ gameState, config, isAdminView = false, answers = 
                 ПРАВИЛЬНЫЙ ОТВЕТ
               </div>
               {config.number === 2 && q.word1 && q.word2 && <RebusDecode word1={q.word1} word2={q.word2} />}
-              {Array.isArray(q.correct_answer) ? (
+              {q.match_pairs && q.media_urls?.length > 0 ? (
+                <MatchAnswerGrid images={q.media_urls} pairs={q.correct_pairs || []} stepKey={step} />
+              ) : q.order_answer && Array.isArray(q.correct_answer) ? (
+                <StaggeredList lines={q.correct_answer} stepKey={step} />
+              ) : q.choices ? (
+                <StaggeredChoices choices={q.choices} correctKey={q.correct_choice} stepKey={step} />
+              ) : Array.isArray(q.correct_answer) ? (
                 <StaggeredList lines={q.correct_answer} stepKey={step} />
               ) : (
                 <Typewriter text={q.correct_answer || q.correct_choice} speed={45} style={{
@@ -452,6 +460,96 @@ export function ShowAnswers({ gameState, config, isAdminView = false, answers = 
           </button>
         )}
       </div>
+    </div>
+  )
+}
+
+// Р3-вопросы (А/Б/В/Г): сначала 2 неверных варианта, через 2 сек — остальные,
+// среди которых верный подсвечен зелёным. Выглядит как обычный экран вопроса,
+// просто раскрывается поэтапно вместо мгновенного показа всего разом.
+function StaggeredChoices({ choices, correctKey, stepKey }) {
+  const [phase, setPhase] = useState(0) // 0 = ничего, 1 = первые 2, 2 = все
+  // Порядок раскрытия фиксируем один раз на вопрос (stepKey), чтобы при ре-рендерах
+  // не тасовалось заново — неверные вперемешку, верный всегда во второй волне.
+  const order = useMemo(() => {
+    const wrong = choices.filter(c => c.key !== correctKey)
+    const correct = choices.find(c => c.key === correctKey)
+    const shuffledWrong = [...wrong].sort(() => Math.random() - 0.5)
+    const firstWave = shuffledWrong.slice(0, 2)
+    const secondWave = [...shuffledWrong.slice(2), correct].filter(Boolean).sort(() => Math.random() - 0.5)
+    return { firstWave, secondWave }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stepKey])
+
+  useEffect(() => {
+    setPhase(0)
+    const t1 = setTimeout(() => setPhase(1), 300)
+    const t2 = setTimeout(() => setPhase(2), 2300)
+    return () => { clearTimeout(t1); clearTimeout(t2) }
+  }, [stepKey])
+
+  const visibleKeys = new Set([
+    ...(phase >= 1 ? order.firstWave.map(c => c.key) : []),
+    ...(phase >= 2 ? order.secondWave.map(c => c.key) : []),
+  ])
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, maxWidth: 1200, margin: '0 auto', width: '100%' }}>
+      {choices.map(c => {
+        const visible = visibleKeys.has(c.key)
+        const isCorrect = c.key === correctKey
+        return (
+          <div key={c.key} className={visible ? 'reveal-up' : ''} style={{
+            background: '#0d0d0d',
+            border: `1px solid ${visible && isCorrect ? '#22c55e' : '#333'}`,
+            borderLeft: `4px solid ${visible && isCorrect ? '#22c55e' : 'var(--accent)'}`,
+            padding: '22px 28px', display: 'flex', gap: 22, alignItems: 'center',
+            opacity: visible ? 1 : 0, transition: 'opacity 0.3s',
+            boxShadow: visible && isCorrect ? '0 0 24px rgba(34,197,94,0.25)' : 'none',
+          }}>
+            <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 42, fontWeight: 700, color: visible && isCorrect ? '#22c55e' : 'var(--accent)', minWidth: 44 }}>{c.key}</span>
+            <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 32, fontWeight: 600, color: '#eee', lineHeight: 1.2 }}>{c.text}</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// Ответ для сопоставления с картинками: под каждым фото постепенно
+// (по одной, каждые 3 сек) появляется правильная буква.
+function MatchAnswerGrid({ images, pairs, stepKey }) {
+  const [count, setCount] = useState(0)
+  useEffect(() => {
+    setCount(0)
+    if (!images?.length) return
+    const interval = setInterval(() => {
+      setCount(prev => {
+        if (prev >= images.length) { clearInterval(interval); return prev }
+        return prev + 1
+      })
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [images, stepKey])
+
+  const answerFor = (num) => {
+    const pair = pairs.find(p => p[0] === String(num))
+    return pair ? pair.slice(1) : '?'
+  }
+
+  return (
+    <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', justifyContent: 'center' }}>
+      {images.map((url, i) => (
+        <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, width: 220 }}>
+          <img src={mediaSrc(url)} alt={`img-${i + 1}`} style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 6, border: '1px solid #222' }} />
+          {i < count && (
+            <div className="reveal-up" style={{
+              fontFamily: 'Orbitron, monospace', fontSize: 42, fontWeight: 700,
+              color: '#22c55e', textShadow: '0 0 18px rgba(34,197,94,0.45)',
+            }}>{answerFor(i + 1)}</div>
+          )}
+        </div>
+      ))}
     </div>
   )
 }
@@ -586,7 +684,7 @@ export function qNumber(config, step) {
 
 export function Slide({ children }) {
   return (
-    <div className="full-screen grid-bg flex-center flex-col" style={{ gap: 28, padding: 40, position: 'relative' }}>
+    <div className="grid-bg flex-center flex-col" style={{ height: '100vh', overflow: 'hidden', gap: 28, padding: 40, position: 'relative', display: 'flex' }}>
       {children}
     </div>
   )

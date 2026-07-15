@@ -5,7 +5,7 @@ import RoundShell from '../../components/RoundShell'
 // Пример: КорабЛИК + ВИНоград = ЛИКВИН (условно).
 export const ROUND2 = {
   number: 2,
-  titleLines: ['РЕБУСЫ', 'ИЗ КАРТИНОК'],
+  titleLines: ['ШЕСТЬ', 'БУКВ'],
   metaLine: '10 ВОПРОСОВ · 60 СЕК · 1 БАЛЛ',
   timerSeconds: 60,
   hasRepeats: false,
@@ -19,7 +19,15 @@ export const ROUND2 = {
   ],
   questions: [
     { content_type: 'multi_image', question_text: '', media_urls: ['/media/r6.1_1.jpg', '/media/r6.1_2.jpg'], word1: 'бланш', word2: 'лагуна', correct_answer: 'Аншлаг' },
-    { content_type: 'multi_image', question_text: '', media_urls: ['/media/r6/q2-1.jpg', '/media/r6/q2-2.jpg'], correct_answer: '—' },
+    { content_type: 'multi_image', question_text: '', media_urls: ['/media/r2_2_1.jpg', '/media/r2_2_2.jpg'], word1: 'Динозавр', word2: 'Оракул', correct_answer: 'Аврора' },
+    { content_type: 'multi_image', question_text: '', media_urls: ['/media/r2_3_1.jpg', '/media/r2_3_2.jpg'], word1: 'Байкал', word2: 'Пакля', correct_answer: 'Калпак' },
+    { content_type: 'multi_image', question_text: '', media_urls: ['/media/r2_4_1.jpg', '/media/r2_4_2.jpg'], word1: 'Ток', word2: 'Сикль', correct_answer: 'Токсик' },
+    { content_type: 'multi_image', question_text: '', media_urls: ['/media/r2_5_1.jpg', '/media/r2_5_2.jpg'], word1: 'Сад', word2: 'Иствуд', correct_answer: 'Садист' },
+    { content_type: 'multi_image', question_text: '', media_urls: ['/media/r2_6_1.jpg', '/media/r2_6_2.jpg'], word1: 'Молоко', word2: 'Рокуэлл', correct_answer: 'Окорок'},
+    { content_type: 'multi_image', question_text: '', media_urls: ['/media/r2_7_1.jpg', '/media/r2_7_2.jpg'], word1: 'Щербаков', word2: 'Бойлер', correct_answer: 'Ковбой'},
+    { content_type: 'multi_image', question_text: '', media_urls: ['/media/r2_8_1.jpg', '/media/r2_8_2.jpg'], word1: 'Атлас', word2: 'Тик', correct_answer: 'Ластик'},
+    { content_type: 'multi_image', question_text: '', media_urls: ['/media/r2_9_1.jpg', '/media/r2_9_2.jpg'], word1: 'Плед', word2: 'Никель', correct_answer: 'Ледник'},
+    { content_type: 'multi_image', question_text: '', media_urls: ['/media/r2_10_1.jpg', '/media/r2_10_2.jpg'], word1: 'Кадет', word2: 'Алиса', correct_answer: 'Детали'},
     // ...добавляй до 10
   ],
 }

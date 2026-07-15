@@ -5,8 +5,8 @@ import { useGameState } from '../hooks/useGameState'
 import { useTeams } from '../hooks/useTeams'
 import { useAnswers } from '../hooks/useAnswers'
 import {
-  updateGameState, openAnswers, closeAnswers,
-  showScoreboard, awardPoints, markAnswer, doubleRoundScore, resetGame,
+  updateGameState,
+  awardPoints, markAnswer, doubleRoundScore, resetGame, publishRandomGroups,
 } from '../lib/gameActions'
 import { advance, goBack, setPhase } from '../lib/roundFlow'
 import { ShowAnswers } from '../components/RoundShell'
@@ -85,9 +85,86 @@ function AdminPanel() {
   )
 }
 
+const TEAM_COLORS = ['#ea580c', '#3b82f6', '#22c55e', '#a855f7', '#ec4899', '#eab308']
+
+// ═══ РАНДОМАЙЗЕР КОМАНД ═══
+// Вводишь список людей (по одному на строку), задаёшь число команд —
+// система тасует и распределяет случайно, создаёт команды с этим составом.
+function TeamRandomizer() {
+  const [namesText, setNamesText] = useState('')
+  const [teamCount, setTeamCount] = useState(4)
+  const [preview, setPreview] = useState(null) // [[имена группы 1], [группы 2], ...]
+  const [publishing, setPublishing] = useState(false)
+  const [open, setOpen] = useState(false)
+
+  function shuffle() {
+    const names = namesText.split('\n').map(s => s.trim()).filter(Boolean)
+    if (names.length === 0) return
+    const shuffled = [...names].sort(() => Math.random() - 0.5)
+    const groups = Array.from({ length: teamCount }, () => [])
+    shuffled.forEach((name, i) => groups[i % teamCount].push(name))
+    setPreview(groups)
+  }
+
+  // Публикуем на общий экран (лобби) — там все видят своё распределение
+  // и капитаны сами регистрируют команду, не нужно зачитывать список вслух.
+  async function publish() {
+    if (!preview) return
+    setPublishing(true)
+    await publishRandomGroups(preview)
+    setPublishing(false)
+  }
+
+  return (
+    <div style={{ border: '1px solid #333', padding: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <button onClick={() => setOpen(o => !o)} style={A.linkBtn}>
+        {open ? 'СКРЫТЬ РАНДОМАЙЗЕР КОМАНД' : '🎲 РАНДОМАЙЗЕР КОМАНД'}
+      </button>
+      {open && (
+        <>
+          <div style={A.dim}>ВСТАВЬ ИМЕНА — КАЖДОЕ С НОВОЙ СТРОКИ</div>
+          <textarea value={namesText} onChange={e => { setNamesText(e.target.value); setPreview(null) }}
+            placeholder={'Ваня\nМаша\nПетя\n...'} rows={5}
+            style={{ background: '#151515', border: '1px solid #333', color: '#fff', padding: '10px 12px', fontFamily: 'Inter, sans-serif', fontSize: 14, resize: 'vertical' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={A.dim}>КОМАНД:</span>
+            <input type="number" min={2} max={6} value={teamCount}
+              onChange={e => { setTeamCount(Math.max(2, Math.min(6, Number(e.target.value) || 2))); setPreview(null) }}
+              style={{ width: 60, background: '#151515', border: '1px solid #333', color: '#fff', padding: '6px 10px', fontFamily: 'Orbitron, monospace', fontSize: 16, textAlign: 'center' }} />
+            <button onClick={shuffle} style={A.btn('#ea580c')}>🎲 ПЕРЕМЕШАТЬ</button>
+          </div>
+
+          {preview && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {preview.map((group, i) => (
+                <div key={i} style={{
+                  padding: '8px 12px', border: `1px solid ${TEAM_COLORS[i % TEAM_COLORS.length]}`,
+                  borderLeft: `3px solid ${TEAM_COLORS[i % TEAM_COLORS.length]}`,
+                }}>
+                  <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 13, color: TEAM_COLORS[i % TEAM_COLORS.length], marginBottom: 4 }}>
+                    КОМАНДА {i + 1}
+                  </div>
+                  <div style={{ fontSize: 14, color: '#ccc' }}>{group.join(', ') || '—'}</div>
+                </div>
+              ))}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={shuffle} style={A.btn('#555')}>↻ ЕЩЁ РАЗ</button>
+                <button onClick={publish} disabled={publishing} style={A.btn('#22c55e')}>
+                  {publishing ? 'ПУБЛИКУЮ...' : '📺 ПОКАЗАТЬ НА ЭКРАНЕ'}
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
 function RoundPicker({ current }) {
   return (
     <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <TeamRandomizer />
       <div style={A.dim}>ВЫБЕРИ РАУНД ДЛЯ СТАРТА</div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         {Object.entries(ROUND_CONFIGS).filter(([n]) => !DISABLED_ROUNDS.includes(Number(n))).map(([n, c]) => (
@@ -201,19 +278,14 @@ function AdminRoundView({ gameState, config, round, teams, answers, refetchAnswe
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={openAnswers} style={A.btn('#22c55e')}>ОТКРЫТЬ ОТВЕТЫ</button>
-          <button onClick={closeAnswers} style={A.btn('#ef4444')}>ЗАКРЫТЬ ОТВЕТЫ</button>
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={() => showScoreboard(true)} style={A.btn('#ea580c')}>ПОКАЗАТЬ ТАБЛО</button>
-          <button onClick={() => showScoreboard(false)} style={A.btn('#555')}>СКРЫТЬ ТАБЛО</button>
-        </div>
-
         <button onClick={() => setShowRoundSwitch(s => !s)} style={A.linkBtn}>
           {showRoundSwitch ? 'СКРЫТЬ СПИСОК РАУНДОВ' : 'СМЕНИТЬ РАУНД'}
         </button>
         {showRoundSwitch && <RoundPicker current={round} />}
+
+        {/* Рандомайзер доступен всегда, не только пока статус lobby — иначе
+            его физически негде найти, если игра уже стартовала хоть раз */}
+        <TeamRandomizer />
 
         <button onClick={async () => {
           if (window.confirm('НОВАЯ ИГРА: удалить все команды, ответы и баллы? Это необратимо.')) {

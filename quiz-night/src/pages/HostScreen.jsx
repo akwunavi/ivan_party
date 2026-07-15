@@ -32,8 +32,8 @@ export default function HostScreen() {
   if (gameState.status === 'scoreboard') return <Scoreboard roundNumber={gameState.current_round} />
   if (gameState.status === 'break') return <BreakScreen gameState={gameState} />
   if (gameState.status === 'finale') return <FinaleScreen onBackToLobby={() => updateGameState({ status: 'lobby' })} />
-  if (gameState.status === 'lobby') return <Lobby />
+  if (gameState.status === 'lobby') return <Lobby gameState={gameState} />
 
   const Round = ROUNDS[gameState.current_round]
-  return Round ? <Round gameState={gameState} /> : <Lobby />
+  return Round ? <Round gameState={gameState} /> : <Lobby gameState={gameState} />
 }

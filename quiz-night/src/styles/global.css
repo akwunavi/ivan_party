@@ -291,3 +291,21 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 .credits-line { animation: creditsRise 0.6s ease forwards; opacity: 0; }
+
+/* ── Индикатор связи на телефоне игрока ── */
+@keyframes connLostPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+.conn-banner {
+  position: sticky; top: 0; z-index: 50;
+  padding: 10px 16px; text-align: center;
+  font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.conn-banner.offline {
+  background: #7f1d1d; color: #fff; animation: connLostPulse 1.4s ease-in-out infinite;
+}
+.conn-banner.pending {
+  background: rgba(234,88,12,0.15); color: #ea580c; border-bottom: 1px solid rgba(234,88,12,0.3);
+}

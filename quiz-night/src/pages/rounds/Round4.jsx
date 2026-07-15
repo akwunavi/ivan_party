@@ -15,7 +15,7 @@ export const ROUND4 = {
   metaLine: '6 ТЕМ × 4 ОТРЫВКА · 30 СЕК ОТРЫВОК',
   clipSeconds: 30,
   rules: [
-    '6 тем, в каждой 4 отрывка стоимостью 0.5 / 1 / 1.5 / 2 балла',
+  '6 тем, в каждой 4 отрывка стоимостью 0.5 / 1 / 1.5 / 2 балла',
     'Играет по одному человеку от команды',
     'Выбираете плитку — я её запускаю',
     'Отрывок играет 30 секунд',
@@ -28,27 +28,27 @@ export const ROUND4 = {
       { value: 1.5, audio: '/media/song_1_3.mp3', correct_answer: '—' },
       { value: 2,   audio: '/media/song_1_4.mp3', correct_answer: '—' },
     ]},
-    { name: 'ЗАРУБЕЖНЫЙ РОК', hint: 'только русский рок', tiles: [
-      { value: 0.5, audio: '/media/song_2_1.mp3', correct_answer: '—' },
-      { value: 1,   audio: '/media/song_2_2.mp3', correct_answer: '—' },
-      { value: 1.5, audio: '/media/song_2_3.mp3', correct_answer: '—' },
-      { value: 2,   audio: '/media/song_2_4.mp3', correct_answer: '—' },
+    { name: 'ЗАРУБЕЖНЫЙ РОК', hint: 'только зарубежный рок', tiles: [
+      { value: 0.5, audio: '/media/song_2_1.mp3', correct_answer: 'Red Hot Chili Peppers' },
+      { value: 1,   audio: '/media/song_2_2.mp3', correct_answer: 'Marilyn Manson' },
+      { value: 1.5, audio: '/media/song_2_3.mp3', correct_answer: 'Green day' },
+      { value: 2,   audio: '/media/song_2_4.mp3', correct_answer: 'Iron_Maiden' },
     ]},
     { name: 'НОВИНКИ', hint: 'известные исполнители, но с новыми песнями', tiles: [
-      { value: 0.5, audio: '/media/song_3_1.mp3', correct_answer: '—' }, { value: 1, audio: '/media/song_3_2.mp3', correct_answer: '—' },
-      { value: 1.5, audio: '/media/song_3_3.mp3', correct_answer: '—' }, { value: 2, audio: '/media/song_3_4.mp3', correct_answer: 'Muse' },
+      { value: 0.5, audio: '/media/song_3_1.mp3', correct_answer: 'Tokio Hotel' }, { value: 1, audio: '/media/song_3_2.mp3', correct_answer: 'Макс Корж' },
+      { value: 1.5, audio: '/media/song_3_3.mp3', correct_answer: 'Ariana Grande' }, { value: 2, audio: '/media/song_3_4.mp3', correct_answer: 'Muse' },
     ]},
     { name: 'РУССКАЯ РУЛЕТКА', hint: 'всё что угодно', tiles: [
-      { value: 0.5, audio: '/media/song_4_1.mp3', correct_answer: '—' }, { value: 1, audio: '/media/song_4_2.mp3', correct_answer: 'Нюша' },
-      { value: 1.5, audio: '/media/song_4_3.mp3', correct_answer: '—' }, { value: 2, audio: '/media/song_4_4.mp3', correct_answer: '—' },
+      { value: 0.5, audio: '/media/song_4_1.mp3', correct_answer: 'Britney Spears' }, { value: 1, audio: '/media/song_4_2.mp3', correct_answer: 'Нюша' },
+      { value: 1.5, audio: '/media/song_4_3.mp3', correct_answer: 'Oxxxymiron' }, { value: 2, audio: '/media/song_4_4.mp3', correct_answer: 'Егор Крид' },
     ]},
     { name: 'Я БЫЛ НА ЕВРОВИДЕНИИ', hint: '', tiles: [
       { value: 0.5, audio: '/media/song_5_1.mp3', correct_answer: 'The Rasmus' }, { value: 1, audio: '/media/song_5_2.mp3', correct_answer: 'Flo Rida' },
       { value: 1.5, audio: '/media/song_5_3.mp3', correct_answer: 'Brainstorm' }, { value: 2, audio: '/media/song_5_4.mp3', correct_answer: 'Лара Фабиан' },
     ]},
     { name: 'ШКОЛЬНАЯ ДИСКОТЕКА', hint: 'хиты нашей юности', tiles: [
-      { value: 0.5, audio: '/media/song_6_1.mp3', correct_answer: '—' }, { value: 1, audio: '/media/song_6_2.mp3', correct_answer: 'Энрике Иглесиас' },
-      { value: 1.5, audio: '/media/song_6_3.mp3', correct_answer: '—' }, { value: 2, audio: '/media/song_6_4.mp3', correct_answer: '—' },
+      { value: 0.5, audio: '/media/song_6_1.mp3', correct_answer: 'Дима Билан' }, { value: 1, audio: '/media/song_6_2.mp3', correct_answer: 'Энрике Иглесиас' },
+      { value: 1.5, audio: '/media/song_6_3.mp3', correct_answer: 'Danzel' }, { value: 2, audio: '/media/song_6_4.mp3', correct_answer: 'Sugababes' },
     ]},
   ],
 }
@@ -77,7 +77,7 @@ export default function Round4({ gameState }) {
   if (status === 'round_intro') return (
     <Slide>
       <div className="mono-tag">РАУНД 04</div>
-      <h1 style={T.title}>МУЗЫКАЛЬНАЯ<br /><span style={{ color: '#ea580c' }}>СВОЯ ИГРА</span></h1>
+      <h1 className="neon-title glitch-title" style={T.title}>МУЗЫКАЛЬНАЯ<br /><span style={{ color: '#ea580c' }}>СВОЯ ИГРА</span></h1>
       <div style={T.meta}>{ROUND4.metaLine}</div>
       <NavButtons onNext={() => setPhase('rules')} nextLabel="ПРАВИЛА →" />
     </Slide>
@@ -88,7 +88,7 @@ export default function Round4({ gameState }) {
       <div className="card" style={{ maxWidth: 640 }}>
         <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 12 }}>
           {ROUND4.rules.map((r, i) => (
-            <li key={i} className="rule-line" style={{ ...T.rule, animationDelay: `${i * 0.22}s` }}>
+            <li key={i} className="rule-line" style={{ ...T.rule, animationDelay: `${i * 0.4}s` }}>
               <span style={T.num}>{String(i + 1).padStart(2, '0')}</span>{r}
             </li>
           ))}
@@ -101,7 +101,7 @@ export default function Round4({ gameState }) {
   return (
     <div className="grid-bg flex-col" style={{ height: '100vh', overflow: 'hidden', padding: '24px 40px', gap: 16, display: 'flex', position: 'relative' }}>
       <div style={{ flexShrink: 0 }}>
-        <div style={{
+        <div className="glitch-title-rare" style={{
           fontFamily: 'Russo One, sans-serif', fontSize: 'clamp(40px, 5vw, 72px)',
           color: '#fff', textShadow: '0 0 26px rgba(234,88,12,0.4)', letterSpacing: '0.02em',
         }}>
@@ -288,8 +288,8 @@ function TileModal({ active, onClose }) {
 }
 
 const T = {
-  title: { fontFamily: 'Rajdhani, sans-serif', fontSize: 'clamp(40px, 6vw, 80px)', fontWeight: 700, lineHeight: 0.95, textAlign: 'center', letterSpacing: '-0.02em', color: '#fff' },
-  meta: { color: '#555', fontFamily: 'Share Tech Mono, monospace', fontSize: 12, letterSpacing: '0.15em' },
+  title: { fontFamily: 'Russo One, Rajdhani, sans-serif', fontSize: 'clamp(68px, 12vw, 150px)', lineHeight: 0.95, textAlign: 'center', letterSpacing: '-0.02em', color: '#fff' },
+  meta: { color: '#777', fontFamily: 'Share Tech Mono, monospace', fontSize: 19, letterSpacing: '0.2em' },
   rule: { display: 'flex', gap: 14, alignItems: 'flex-start', fontFamily: 'Inter, sans-serif', fontSize: 24, color: '#ddd', lineHeight: 1.65 },
   num: { color: '#ea580c', fontFamily: 'Share Tech Mono, monospace', fontSize: 12, marginTop: 4 },
   themeHead: {
@@ -302,8 +302,8 @@ const T = {
   },
   themeHint: {
     fontFamily: 'Share Tech Mono, monospace',
-    fontSize: 'clamp(10px, 0.95vw, 13px)', fontWeight: 400,
-    color: '#888', marginTop: 6, letterSpacing: 0,
+    fontSize: 'clamp(12px, 1.15vw, 16px)', fontWeight: 400,
+    color: '#999', marginTop: 8, letterSpacing: 0,
     overflow: 'hidden', textOverflow: 'ellipsis',
     display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
     lineHeight: 1.3,

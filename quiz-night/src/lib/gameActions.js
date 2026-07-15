@@ -59,6 +59,17 @@ export async function markAnswer(answerId, isCorrect, pointsAwarded) {
   if (error) throw error
 }
 
+// ═══ РАНДОМАЙЗЕР КОМАНД: публикация на общий экран ═══
+// Группы пишутся в step_data лобби (status остаётся 'lobby'), чтобы все видели
+// распределение на проекторе. Каждый капитан регистрируется сам как обычно.
+export async function publishRandomGroups(groups) {
+  await updateGameState({ status: 'lobby', step_data: { random_groups: groups } })
+}
+
+export async function clearRandomGroups() {
+  await updateGameState({ step_data: {} })
+}
+
 // Зарегистрировать команду
 export async function registerTeam(name, color) {
   const { data: game } = await supabase.from('game').select('id').single()

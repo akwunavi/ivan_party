@@ -5,11 +5,14 @@ import { updateGameState } from '../lib/gameActions'
 
 // Hash-роутинг: ссылка для игроков выглядит как .../index.html#/player
 const PLAYER_URL = `${window.location.origin}${window.location.pathname}#/player`
-const TEAM_COLORS = ['#ea580c', '#3b82f6', '#22c55e', '#a855f7']
+// П.4: палитра расширена (было 4, теперь 8) — меньше риска, что двум командам
+// не хватит уникальных цветов, если их больше четырёх.
+const TEAM_COLORS = ['#ea580c', '#3b82f6', '#22c55e', '#a855f7', '#ec4899', '#eab308', '#14b8a6', '#f43f5e']
 
-export default function Lobby() {
+export default function Lobby({ gameState }) {
   const teams = useTeams()
   const [pulse, setPulse] = useState(false)
+  const groups = gameState?.step_data?.random_groups || null
 
   // Пульсация когда подключается новая команда
   useEffect(() => {
@@ -100,6 +103,34 @@ export default function Lobby() {
         </div>
       )}
       </div>
+
+      {/* Рандомайзер команд — опубликованное распределение, все видят сами */}
+      {groups && (
+        <div style={{ width: '100%', maxWidth: 1000 }}>
+          <div className="mono-tag" style={{ textAlign: 'center', marginBottom: 14 }}>
+            🎲 РАСПРЕДЕЛЕНИЕ КОМАНД — КАПИТАН РЕГИСТРИРУЕТ КОМАНДУ САМ
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(groups.length, 4)}, 1fr)`, gap: 16 }}>
+            {groups.map((group, i) => (
+              <div key={i} style={{
+                padding: '16px 20px', border: `2px solid ${TEAM_COLORS[i % TEAM_COLORS.length]}`,
+                borderLeft: `5px solid ${TEAM_COLORS[i % TEAM_COLORS.length]}`,
+                background: `${TEAM_COLORS[i % TEAM_COLORS.length]}12`,
+              }}>
+                <div style={{
+                  fontFamily: 'Russo One, Rajdhani, sans-serif', fontSize: 18,
+                  color: TEAM_COLORS[i % TEAM_COLORS.length], marginBottom: 8,
+                }}>
+                  КОМАНДА {i + 1}
+                </div>
+                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 20, color: '#eee', lineHeight: 1.5 }}>
+                  {group.join(', ')}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
 
 

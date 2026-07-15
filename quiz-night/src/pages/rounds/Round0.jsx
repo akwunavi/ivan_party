@@ -20,6 +20,7 @@ export const ROUND0 = {
     {
       content_type: 'text',
       question_text: 'Этот термин, пришедший в русский язык как калька с английского, в одной сфере означает отказ от услуг посредника и самостоятельное решение проблемы. В другой — он описывает модель получения, при которой человек, желая сэкономить и чуть походить, также отказывается от услуг уже другого посредника. Назовите этот термин.',
+      voice_audio: '/media/voices/0_1.mp3',
       media_urls: [],
       choices: null,
       correct_answer: 'Самовывоз',
@@ -29,6 +30,7 @@ export const ROUND0 = {
       question_text: 'Узнайте звезду в молодости?',
       media_urls: ['media/r0.jpg'],
       answer_media_urls:['/media/ans_r0.jpg'],
+      voice_audio: '/media/voices/0_2.mp3',
       choices: null,
       correct_answer: 'Джессика Лэнг',
     },
@@ -40,6 +42,7 @@ export const ROUND0 = {
 
 Назовите этот роман.`,
       media_urls: [],
+      voice_audio: '/media/voices/0_3.mp3',
       choices: null,
       correct_answer: 'Вокруг света за 80 дней',
     },
@@ -73,7 +76,7 @@ export const ROUND0 = {
       media_urls: ['/media/ans_r0_5_1.jpg', '/media/ans_r0_5_2.jpg', '/media/ans_r0_5_3.jpg', '/media/ans_r0_5_4.jpg'],
       match_pairs: {left: ['1', '2', '3', '4'], right: ['А', 'Б', 'В', 'Г']}, 
       correct_pairs: ['1Б', '2В', '3А' , '4Г'], 
-      correct_answer: ['1 - Английский бульдог', '2 - Альпаха', '3 - Континентальный бульдог', '4 - Американский бульдог']
+      correct_answer: ['Б - Английский бульдог', 'В - Альпаха', 'А - Континентальный бульдог', 'Г - Американский бульдог']
     },
   ],
 }

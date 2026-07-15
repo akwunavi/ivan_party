@@ -6,11 +6,23 @@ import Typewriter from './Typewriter'
 import { mediaSrc } from '../lib/paths'
 
 export default function MediaDisplay({ question, showText = true, typewriter = false, noAV = false, revealMedia = false, autoplayAudio = true }) {
-  const { content_type, question_text, media_urls = [] } = question
+  const { content_type, question_text, media_urls = [], match_pairs } = question
   const hasImages = (content_type === 'image' || content_type === 'multi_image') && media_urls.length > 0
 
+  // П.3: для вопросов-сопоставлений заголовок и список вариантов "буква — текст"
+  // разделяются на две части — заголовок идёт НАД картинками, варианты ПОД ними.
+  // Само question_text для такого вопроса содержит только заголовок + список,
+  // разделённые пустой строкой (первая строка — заголовок, остальное — варианты).
+  let titleText = question_text
+  let variantLines = []
+  if (match_pairs && question_text) {
+    const parts = question_text.split('\n').map(s => s.trim()).filter(Boolean)
+    titleText = parts[0]
+    variantLines = parts.slice(1)
+  }
+
   // П.9: адаптивный размер — длинный текст автоматически мельче, короткий крупный
-  const len = (question_text || '').length
+  const len = (titleText || '').length
   const bigSize   = hasImages ? 'clamp(18px, 2.2vw, 28px)' : 'clamp(32px, 4.8vw, 60px)'
   const midSize   = hasImages ? 'clamp(16px, 1.9vw, 24px)' : 'clamp(26px, 3.4vw, 44px)'
   const smallSize = hasImages ? 'clamp(14px, 1.6vw, 20px)' : 'clamp(20px, 2.5vw, 34px)'
@@ -33,16 +45,31 @@ export default function MediaDisplay({ question, showText = true, typewriter = f
     }}>
 
       {/* ТЕКСТ ВОПРОСА — при первом показе «печатается» */}
-      {showText && question_text && (
+      {showText && titleText && (
         typewriter
-          ? <Typewriter text={question_text} style={textStyle} />
-          : <div style={textStyle}>{question_text}</div>
+          ? <Typewriter text={titleText} style={textStyle} />
+          : <div style={textStyle}>{titleText}</div>
       )}
 
       {/* КАРТИНКИ — сетка занимает всё оставшееся место, никогда не вылезает */}
       {hasImages && (
         <div style={{ flex: 1, minHeight: 0, width: '100%' }}>
           <ImageGrid urls={media_urls} />
+        </div>
+      )}
+
+      {/* Варианты сопоставления (буква — текст) — отдельным аккуратным списком ПОД картинками */}
+      {variantLines.length > 0 && (
+        <div style={{
+          display: 'flex', flexWrap: 'wrap', gap: '10px 28px', justifyContent: 'center',
+          flexShrink: 0, maxWidth: 900,
+        }}>
+          {variantLines.map((line, i) => (
+            <div key={i} style={{
+              fontFamily: 'Rajdhani, sans-serif', fontSize: 'clamp(18px, 2.2vw, 26px)',
+              fontWeight: 600, color: '#ccc',
+            }}>{line}</div>
+          ))}
         </div>
       )}
 
@@ -63,11 +90,11 @@ export default function MediaDisplay({ question, showText = true, typewriter = f
               ♪ ЗВУК ИЗ ВИДЕО
             </div>
             {/* Видео полностью скрыто (0 высоты) — играет только звук, кадр не виден */}
-            <video src={mediaSrc(media_urls[0])} controls autoPlay
+            <video src={mediaSrc(media_urls[0])} controls autoPlay={autoplayAudio}
               style={{ width: '100%', height: 0, opacity: 0, position: 'absolute' }} />
           </div>
         ) : (
-          <video src={mediaSrc(media_urls[0])} controls autoPlay
+          <video src={mediaSrc(media_urls[0])} controls autoPlay={autoplayAudio}
             style={{ width: '100%', maxWidth: 900, maxHeight: '55vh', borderRadius: 4, border: '1px solid #222' }} />
         )
       )}
