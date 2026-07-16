@@ -66,7 +66,7 @@ export default function Scoreboard({ roundNumber }) {
   }
 
   return (
-    <div className="full-screen grid-bg flex-center flex-col" style={{ padding: 40 }}>
+    <div className="grid-bg flex-center flex-col" style={{ height: '100vh', display: 'flex', overflowY: 'auto', padding: 40 }}>
 
       {/* Заголовок */}
       <div style={{ textAlign: 'center', marginBottom: 48 }}>
@@ -158,10 +158,10 @@ export default function Scoreboard({ roundNumber }) {
               accepting_answers: false, show_scoreboard: false, step_data: {},
             })
           } else {
-            updateGameState({ status: 'lobby', current_round: 0, current_step: 0, show_scoreboard: false })
+            updateGameState({ status: 'finale', current_round: 0, current_step: 0, show_scoreboard: false })
           }
         }}>
-          {nextEnabledRound(roundNumber) != null ? `РАУНД ${nextEnabledRound(roundNumber)} →` : 'ЗАВЕРШИТЬ ИГРУ'}
+          {nextEnabledRound(roundNumber) != null ? `РАУНД ${nextEnabledRound(roundNumber)} →` : 'ФИНАЛЬНЫЕ ИТОГИ →'}
         </button>
       </div>
     </div>

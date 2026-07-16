@@ -20,7 +20,7 @@ export default function BreakScreen({ gameState }) {
   const nextRound = (gameState.current_round ?? 0) + 1
 
   return (
-    <div className="full-screen grid-bg flex-center flex-col" style={{ gap: 32, padding: 40 }}>
+    <div className="grid-bg flex-center flex-col" style={{ height: '100vh', display: 'flex', overflowY: 'auto', gap: 32, padding: 40 }}>
       <div className="mono-tag" style={{ fontSize: 18, letterSpacing: '0.3em' }}>ПЕРЕРЫВ</div>
       <div style={{
         fontFamily: 'Orbitron, monospace', fontWeight: 900,

@@ -23,8 +23,9 @@ export default function Lobby({ gameState }) {
   }, [teams.length])
 
   return (
-    <div className="full-screen grid-bg flex-center flex-col" style={{
-      position: 'relative', overflow: 'hidden', padding: 40, gap: 28
+    <div className="grid-bg flex-center flex-col" style={{
+      height: '100vh', display: 'flex',
+      position: 'relative', overflowY: 'auto', overflowX: 'hidden', padding: 40, gap: 28
     }}>
 
       {/* Заголовок */}
@@ -39,8 +40,8 @@ export default function Lobby({ gameState }) {
           fontWeight: 700, lineHeight: 0.92,
           letterSpacing: '-0.02em', color: '#fff'
         }}>
-          QUIZ<br />
-          <span style={{ color: '#ea580c' }}>NIGHT</span>
+          IVAN<br />
+          <span style={{ color: '#ea580c' }}>QUIZ#8</span>
         </div>
       </div>
 
@@ -143,24 +144,18 @@ export default function Lobby({ gameState }) {
         </div>
       )}
 
-      {/* Старт игры прямо с лобби, когда команды на месте */}
+      {/* Старт игры прямо с лобби, когда команды на месте.
+          Одна кнопка: игра всегда начинается с разогрева (Раунд 0),
+          после его табло переход ведёт в Раунд 1 автоматически.
+          Пропустить разогрев можно из админки («Сменить раунд» → R1). */}
       {teams.length > 0 && (
-        <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-          <button className="btn btn-ghost" style={{ fontSize: 16, padding: '14px 28px' }}
-            onClick={() => updateGameState({
-              current_round: 0, current_step: 0, status: 'round_intro',
-              accepting_answers: false, show_scoreboard: false, step_data: {},
-            })}>
-            РАЗОГРЕВ
-          </button>
-          <button className="btn btn-primary" style={{ fontSize: 26, padding: '18px 48px' }}
-            onClick={() => updateGameState({
-              current_round: 1, current_step: 0, status: 'round_intro',
-              accepting_answers: false, show_scoreboard: false, step_data: {},
-            })}>
-            НАЧАТЬ ИГРУ →
-          </button>
-        </div>
+        <button className="btn btn-primary" style={{ fontSize: 26, padding: '18px 48px' }}
+          onClick={() => updateGameState({
+            current_round: 0, current_step: 0, status: 'round_intro',
+            accepting_answers: false, show_scoreboard: false, step_data: {},
+          })}>
+          НАЧАТЬ ИГРУ →
+        </button>
       )}
 
       {/* Незаметная ссылка в угол — для тебя, не для гостей */}

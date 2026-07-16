@@ -92,7 +92,7 @@ function JeopardyForm({ team, gameState }) {
         <button onClick={submit} disabled={sends >= 2 || !text.trim()} style={P.submitBtn(sends, !text.trim())}>
           {sends === 0 ? 'ОТПРАВИТЬ' : sends === 1 ? 'ИЗМЕНИТЬ' : '✓ ОТВЕТ ЗАФИКСИРОВАН'}
         </button>
-        <div style={{ ...P.mono, textAlign: 'center', color: '#333' }}>КТО БЫСТРЕЕ — ВЕДУЩИЙ ВИДИТ ВРЕМЯ</div>
+        <div style={{ ...P.mono, textAlign: 'center', color: '#333' }}>КТО БЫСТРЕЕ</div>
       </div>
     </div>
   )
@@ -239,7 +239,7 @@ function AnswerForm({ team, gameState }) {
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 14px', display: 'flex', flexDirection: 'column', gap: 14 }}>
         {!accepting && (
-          <div style={P.notice}>СЛУШАЙ ВОПРОСЫ — ОТВЕТЫ МОЖНО ВНОСИТЬ И ПРАВИТЬ ВЕСЬ РАУНД</div>
+          <div style={P.notice}>СЛУШАЙ ВОПРОСЫ — ОТВЕТЫ НА РАНЕЕ ЗАДАННЫЕ ВОПРОСЫ МОЖНО ВНОСИТЬ И ПРАВИТЬ ВЕСЬ РАУНД</div>
         )}
 
         {(() => { let num = 0; return questions.map((q, i) => {

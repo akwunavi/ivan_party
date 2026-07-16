@@ -44,8 +44,11 @@ export default function RoundShell({ gameState, config, renderQuestion }) {
     audio.volume = 0.6
     musicRef.current = audio
     audio.play().catch(() => {})
+    // При каждом перелистывании (смене step) старый трек ОБЯЗАТЕЛЬНО глушится
+    // здесь, до создания следующего — иначе он продолжает играть в фоне,
+    // накладываясь на трек следующего вопроса.
     return () => audio.pause()
-  }, [timerActive])
+  }, [timerActive, step])
 
   // ── Озвучка + таймер: один раз на каждый (status, step) ──
   useEffect(() => {
@@ -118,8 +121,8 @@ export default function RoundShell({ gameState, config, renderQuestion }) {
   if (status === 'rules') return (
     <Slide>
       <div className="mono-tag">РАУНД {pad(config.number)} :: ПРАВИЛА</div>
-      <div className="card hud-frame" style={{ maxWidth: 780, width: '100%', maxHeight: '62vh', overflowY: 'auto' }}>
-        <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div className="card hud-frame" style={{ maxWidth: '82vw', width: '100%' }}>
+        <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 16 }}>
           {config.rules.map((rule, i) => (
             <li key={i} className="rule-line" style={{ ...S.ruleItem, animationDelay: `${i * 0.4}s` }}>
               <span style={S.ruleNum}>{pad(i + 1)}</span>{rule}
@@ -225,6 +228,19 @@ export function ShowAnswers({ gameState, config, isAdminView = false, answers = 
   const isR3 = config.number === 3
 
   if (!q) return null  // защита от рассинхрона шага
+
+  // П.4: если ведущий не нажал «Показать ответ» вручную за 3 сек — раскрываем
+  // сами. Кнопка при этом остаётся рабочей (вызывает тот же setPhase) —
+  // это просто подстраховка от случая, когда клик не долетел/забыли нажать.
+  // На автопроверку (autoGrade) это не влияет: она реагирует на сам факт
+  // revealed=true, ей всё равно, кто именно его выставил.
+  useEffect(() => {
+    if (revealed || !autoGrade) return
+    const t = setTimeout(() => {
+      setPhase('show_answers', step, { step_data: { revealed: true } })
+    }, 3000)
+    return () => clearTimeout(t)
+  }, [revealed, step, autoGrade])
 
   const teamAnswers = answers.filter(a => a.question_ref === `r${config.number}-q${step}`)
 
@@ -498,17 +514,21 @@ function StaggeredChoices({ choices, correctKey, stepKey }) {
       {choices.map(c => {
         const visible = visibleKeys.has(c.key)
         const isCorrect = c.key === correctKey
+        const dimmed = visible && !isCorrect
         return (
-          <div key={c.key} className={visible ? 'reveal-up' : ''} style={{
-            background: '#0d0d0d',
-            border: `1px solid ${visible && isCorrect ? '#22c55e' : '#333'}`,
-            borderLeft: `4px solid ${visible && isCorrect ? '#22c55e' : 'var(--accent)'}`,
+          <div key={c.key} className={visible ? (isCorrect ? 'reveal-up correct-pulse' : 'reveal-up') : ''} style={{
+            background: dimmed ? '#080808' : '#0d0d0d',
+            border: `1px solid ${visible && isCorrect ? '#22c55e' : dimmed ? '#222' : '#333'}`,
+            borderLeft: `4px solid ${visible && isCorrect ? '#22c55e' : dimmed ? '#333' : 'var(--accent)'}`,
             padding: '22px 28px', display: 'flex', gap: 22, alignItems: 'center',
-            opacity: visible ? 1 : 0, transition: 'opacity 0.3s',
+            opacity: visible ? (isCorrect ? 1 : 0.45) : 0, transition: 'opacity 0.4s',
             boxShadow: visible && isCorrect ? '0 0 24px rgba(34,197,94,0.25)' : 'none',
           }}>
-            <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 42, fontWeight: 700, color: visible && isCorrect ? '#22c55e' : 'var(--accent)', minWidth: 44 }}>{c.key}</span>
-            <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 32, fontWeight: 600, color: '#eee', lineHeight: 1.2 }}>{c.text}</span>
+            <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 42, fontWeight: 700, color: visible && isCorrect ? '#22c55e' : dimmed ? '#555' : 'var(--accent)', minWidth: 44 }}>{c.key}</span>
+            <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 32, fontWeight: 600, color: dimmed ? '#777' : '#eee', lineHeight: 1.2 }}>{c.text}</span>
+            {visible && isCorrect && (
+              <span style={{ marginLeft: 'auto', fontSize: 28, color: '#22c55e' }}>✓</span>
+            )}
           </div>
         )
       })}

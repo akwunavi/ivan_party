@@ -19,7 +19,7 @@ export const ROUND4 = {
     'Играет по одному человеку от команды',
     'Выбираете плитку — я её запускаю',
     'Отрывок играет 30 секунд',
-    'Баллы заберет игрок команды, отправивший правильный ответ первым>',
+    'Баллы заберет игрок команды, отправивший правильный ответ первым',
   ],
    themes: [
     { name: 'РУССКИЙ РОК', hint: 'только русский рок', tiles: [
@@ -85,7 +85,7 @@ export default function Round4({ gameState }) {
   if (status === 'rules') return (
     <Slide>
       <div className="mono-tag">РАУНД 04 :: ПРАВИЛА</div>
-      <div className="card" style={{ maxWidth: 640 }}>
+      <div className="card" style={{ maxWidth: '82vw', width: '100%' }}>
         <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 12 }}>
           {ROUND4.rules.map((r, i) => (
             <li key={i} className="rule-line" style={{ ...T.rule, animationDelay: `${i * 0.4}s` }}>
