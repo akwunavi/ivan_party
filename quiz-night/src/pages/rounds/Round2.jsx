@@ -9,6 +9,7 @@ export const ROUND2 = {
   metaLine: '10 ВОПРОСОВ · 60 СЕК · 1 БАЛЛ',
   timerSeconds: 60,
   hasRepeats: false,
+  rules_audio: '/media/voices_2.jpg',
   autoAdvanceQuestions: true,
   useTts: false,   // тут нечего озвучивать — только картинки
   rules: [

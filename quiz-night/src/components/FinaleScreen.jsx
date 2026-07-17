@@ -60,7 +60,9 @@ export default function FinaleScreen({ onBackToLobby }) {
     return () => clearInterval(interval)
   }, [sorted.length])
 
-  const visible = sorted.slice(sorted.length - revealedCount)
+  // Прыжков нет: все строки отрисованы сразу в финальных позициях,
+  // раскрытие идёт с последнего места вверх только через opacity.
+  const revealedFromIdx = sorted.length - revealedCount
   const showConfetti = revealedCount >= sorted.length && sorted.length > 0
 
   return (
@@ -82,12 +84,17 @@ export default function FinaleScreen({ onBackToLobby }) {
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14, width: '100%', maxWidth: 800, marginTop: 20 }}>
-        {visible.map((team, idx) => {
-          const place = sorted.indexOf(team) + 1
+        {sorted.map((team, idx) => {
+          const place = idx + 1
+          const isRevealed = idx >= revealedFromIdx
+          const isNewest = idx === revealedFromIdx
           const medal = place === 1 ? '🥇' : place === 2 ? '🥈' : place === 3 ? '🥉' : `${place}.`
           const score = totalOf(team.id)
           return (
-            <div key={team.id} className="credits-line reveal-up" style={{
+            <div key={team.id} style={{
+              opacity: isRevealed ? 1 : 0,
+              transform: isRevealed ? 'none' : 'translateY(14px)',
+              transition: 'opacity 0.7s ease, transform 0.7s ease',
               display: 'flex', alignItems: 'center', gap: 20,
               padding: place === 1 ? '22px 32px' : '16px 28px',
               background: place === 1 ? 'rgba(234,88,12,0.1)' : '#0d0d0d',
@@ -99,7 +106,7 @@ export default function FinaleScreen({ onBackToLobby }) {
                 flex: 1, fontFamily: 'Russo One, Rajdhani, sans-serif',
                 fontSize: place === 1 ? 40 : 28, color: team.color || '#fff',
               }}>
-                {idx === 0 ? <Typewriter text={team.name} speed={50} /> : team.name}
+                {isNewest && isRevealed ? <Typewriter text={team.name} speed={50} /> : team.name}
               </div>
               <div style={{
                 fontFamily: 'Orbitron, monospace', fontSize: place === 1 ? 46 : 30,
@@ -123,21 +130,39 @@ export default function FinaleScreen({ onBackToLobby }) {
 
 function Confetti() {
   const colors = ['#ea580c', '#22d3ee', '#22c55e', '#fff', '#f59e0b']
+  // Конфетти: duration = полный пролёт экрана; отрицательных задержек нет,
+  // каждая частица честно долетает до низа перед новым циклом.
   const pieces = Array.from({ length: 40 }, (_, i) => ({
     id: i,
     left: Math.random() < 0.5 ? Math.random() * 15 : 85 + Math.random() * 15, // по краям
-    delay: Math.random() * 2,
-    duration: 3 + Math.random() * 2,
+    delay: Math.random() * 4,
+    duration: 4.5 + Math.random() * 2.5,
+    color: colors[i % colors.length],
+  }))
+  // П.7: шарики! Поднимаются снизу по краям, не мешая таблице в центре.
+  const balloons = Array.from({ length: 8 }, (_, i) => ({
+    id: i,
+    left: i % 2 === 0 ? 2 + Math.random() * 10 : 86 + Math.random() * 10,
+    delay: Math.random() * 5,
+    duration: 8 + Math.random() * 5,
     color: colors[i % colors.length],
   }))
   return (
     <>
       {pieces.map(p => (
-        <div key={p.id} className="confetti-piece" style={{
+        <div key={`c${p.id}`} className="confetti-piece" style={{
           left: `${p.left}%`,
           background: p.color,
           animationDelay: `${p.delay}s`,
           animationDuration: `${p.duration}s`,
+        }} />
+      ))}
+      {balloons.map(b => (
+        <div key={`b${b.id}`} className="balloon" style={{
+          left: `${b.left}%`,
+          background: `radial-gradient(circle at 35% 30%, ${b.color}, ${b.color}99)`,
+          animationDelay: `${b.delay}s`,
+          animationDuration: `${b.duration}s`,
         }} />
       ))}
     </>

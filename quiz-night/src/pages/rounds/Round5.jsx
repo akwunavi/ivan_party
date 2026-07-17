@@ -9,7 +9,7 @@ export const ROUND5 = {
   titleLines: ['РАУНД', 'ГЕОГРАФИЯ'],
   metaLine: '6 ВОПРОСОВ · 60 СЕК · СТАВКИ 0–5',
   timerSeconds: 60,
-  hasRepeats: true,
+  hasRepeats: false,
   stakesRound: true,
   stakesValues: [0, 1, 2, 3, 4, 5],  // каждая ровно 1 раз
   autoAdvanceQuestions: false,

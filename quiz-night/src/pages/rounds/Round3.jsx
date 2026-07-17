@@ -11,6 +11,7 @@ export const ROUND3 = {
   metaLine: '15 ВОПРОСОВ · 30 СЕК · СТОП ПОСЛЕ ОШИБКИ',
   timerSeconds: 30,
   hasRepeats: false,
+  rules_audio: '/media/voices_3.jpg',
   autoAdvanceQuestions: true,   // сам листает
   autoAdvanceDelayMs: 5000,     // через 5 сек после конца таймера
   stopOnWrong: true,
@@ -34,6 +35,7 @@ export const ROUND3 = {
         { key: 'Г', text: 'Плетут' },
       ],
       correct_choice: 'Г',           // ← верный ответ задаёшь тут
+      voice_audio: '/media/voices/3_1.mp3',
       correct_answer: 'Г — Плетут',
     },
     {
@@ -45,6 +47,7 @@ export const ROUND3 = {
         { key: 'В', text: 'Кислород' },
         { key: 'Г', text: 'Железо' },
       ],
+      voice_audio: '/media/voices/3_2.mp3',
       correct_choice: 'В',           // ← верный ответ задаёшь тут
       correct_answer: 'В — Кислород',
     },
@@ -57,6 +60,7 @@ export const ROUND3 = {
         { key: 'В', text: 'Шейный позвонок' },
         { key: 'Г', text: 'Часть плеча' },
       ],
+      voice_audio: '/media/voices/3_3.mp3',
       correct_choice: 'В',           // ← верный ответ задаёшь тут
       correct_answer: 'В — Шейный позвонок',
     },
@@ -69,6 +73,7 @@ export const ROUND3 = {
         { key: 'В', text: 'город Триполи' },
         { key: 'Г', text: 'Пещера Труа-Фурер' },
       ],
+      voice_audio: '/media/voices/3_4.mp3',
       correct_choice: 'А',           // ← верный ответ задаёшь тут
       correct_answer: 'А — Остров Тринидад',
     },
@@ -79,20 +84,22 @@ export const ROUND3 = {
         { key: 'А', text: 'Забавный флот' },
         { key: 'Б', text: 'Шуточный флот' },
         { key: 'В', text: 'Прикольный флот' },
-        { key: 'Г', text: 'Репризный флот' },
+        { key: 'Г', text: 'Весёлый флот' },
       ],
+      voice_audio: '/media/voices/3_5.mp3',
       correct_choice: 'В',           // ← верный ответ задаёшь тут
       correct_answer: 'В — Прикольный флот',
     },
     {
       content_type: 'choice',
-      question_text: 'Какое насекомое вызвало короткое замыкание в ранней версии вычислительной машины, тем самым породив термин «компьютерный баг» («баг» в переводе с англ. «насекомое»)?',
+      question_text: 'Какое насекомое вызвало короткое замыкание в ранней версии вычислительной машины, тем самым породив термин «компьютерный баг»?',
       choices: [
         { key: 'А', text: 'Мотылек' },
         { key: 'Б', text: 'Таракан' },
         { key: 'В', text: 'Муха' },
         { key: 'Г', text: 'Японский хрущик' },
       ],
+      voice_audio: '/media/voices/3_6.mp3',
       correct_choice: 'А',           // ← верный ответ задаёшь тут
       correct_answer: 'А — Мотылек',
     },
@@ -105,6 +112,7 @@ export const ROUND3 = {
         { key: 'В', text: 'Гигабит' },
         { key: 'Г', text: 'Наномоль' },
       ],
+      voice_audio: '/media/voices/3_7.mp3',
       correct_choice: 'А',           // ← верный ответ задаёшь тут
       correct_answer: 'А — Гугол',
   },
@@ -117,6 +125,7 @@ export const ROUND3 = {
         { key: 'В', text: 'Пулеметное гнездо' },
         { key: 'Г', text: 'Пушка' },
       ],
+      voice_audio: '/media/voices/3_8.mp3',
       correct_choice: 'Г',           // ← верный ответ задаёшь тут
       correct_answer: 'Г — Пушка',
   },
@@ -129,6 +138,7 @@ export const ROUND3 = {
         { key: 'В', text: 'Бериллий' },
         { key: 'Г', text: 'Теллур' },
       ],
+      voice_audio: '/media/voices/3_9.mp3',
       correct_choice: 'Б',           // ← верный ответ задаёшь тут
       correct_answer: 'Б — Кобальт',
   },
@@ -141,6 +151,7 @@ export const ROUND3 = {
         { key: 'В', text: 'Три' },
         { key: 'Г', text: 'Четыре' },
       ],
+      voice_audio: '/media/voices/3_10.mp3',
       correct_choice: 'В',           // ← верный ответ задаёшь тут
       correct_answer: 'В — Три',
   },
@@ -153,6 +164,7 @@ export const ROUND3 = {
         { key: 'В', text: 'Пять' },
         { key: 'Г', text: 'Шесть' },
       ],
+      voice_audio: '/media/voices/3_11.mp3',
       correct_choice: 'Г',           // ← верный ответ задаёшь тут
       correct_answer: 'Г — Шесть',
   },
@@ -165,6 +177,7 @@ export const ROUND3 = {
         { key: 'В', text: 'Ницше' },
         { key: 'Г', text: 'Шопенгауэр' },
       ],
+      voice_audio: '/media/voices/3_12.mp3',
       correct_choice: 'В',           // ← верный ответ задаёшь тут
       correct_answer: 'В — Ницше',
   },
@@ -177,6 +190,7 @@ export const ROUND3 = {
         { key: 'В', text: 'Уланы' },
         { key: 'Г', text: 'Гусары' },
       ],
+      voice_audio: '/media/voices/3_13.mp3',
       correct_choice: 'А',           // ← верный ответ задаёшь тут
       correct_answer: 'А — Драгуны',
   },
@@ -189,6 +203,7 @@ export const ROUND3 = {
         { key: 'В', text: 'Ереван' },
         { key: 'Г', text: 'Минск' },
       ],
+      voice_audio: '/media/voices/3_14.mp3',
       correct_choice: 'А',           // ← верный ответ задаёшь тут
       correct_answer: 'А — Тбилиси',
   },
@@ -201,6 +216,7 @@ export const ROUND3 = {
         { key: 'В', text: 'Георгий' },
         { key: 'Г', text: 'Евгений' },
       ],
+      voice_audio: '/media/voices/3_15.mp3',
       correct_choice: 'В',           // ← верный ответ задаёшь тут
       correct_answer: 'В — Георгий',
   }

@@ -11,7 +11,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { speak, stopSpeech } from '../lib/tts'
 import { advance, goBack, setPhase } from '../lib/roundFlow'
-import { startTimer, awardPoints, markAnswer, doubleRoundScore } from '../lib/gameActions'
+import { startTimer, awardPoints, markAnswer, doubleRoundScore, updateGameState } from '../lib/gameActions'
+import { TOTAL_ROUNDS, DISABLED_ROUNDS } from '../lib/roundsRegistry'
 import { isFuzzyMatch, letterEq } from '../lib/answerCheck'
 import { supabase } from '../lib/supabase'
 import { mediaSrc } from '../lib/paths'
@@ -119,19 +120,7 @@ export default function RoundShell({ gameState, config, renderQuestion }) {
   )
 
   if (status === 'rules') return (
-    <Slide>
-      <div className="mono-tag">РАУНД {pad(config.number)} :: ПРАВИЛА</div>
-      <div className="card hud-frame" style={{ maxWidth: '82vw', width: '100%' }}>
-        <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {config.rules.map((rule, i) => (
-            <li key={i} className="rule-line" style={{ ...S.ruleItem, animationDelay: `${i * 0.4}s` }}>
-              <span style={S.ruleNum}>{pad(i + 1)}</span>{rule}
-            </li>
-          ))}
-        </ul>
-      </div>
-      <NavButtons onBack={back} onNext={next} nextLabel="НАЧАТЬ →" />
-    </Slide>
+    <RulesSlide config={config} back={back} next={next} />
   )
 
   if (status === 'question' || status === 'repeat') {
@@ -219,6 +208,14 @@ export default function RoundShell({ gameState, config, renderQuestion }) {
 // Вопрос ОСТАЁТСЯ на экране; ответ появляется ПОД ним.
 // Справа — ответы команд КРУПНО. Навигация видна везде (синхронна).
 // ════════════════════════════════════════════════════════════
+// Есть ли ещё раунды после текущего (с учётом отключённых)?
+function hasNextRound(current) {
+  for (let n = current + 1; n <= TOTAL_ROUNDS; n++) {
+    if (!DISABLED_ROUNDS.includes(n)) return true
+  }
+  return false
+}
+
 export function ShowAnswers({ gameState, config, isAdminView = false, answers = [], autoGrade = false }) {
   const step = gameState.current_step
   const revealed = !!gameState.step_data?.revealed
@@ -375,7 +372,7 @@ export function ShowAnswers({ gameState, config, isAdminView = false, answers = 
             {!(q.match_pairs && revealed) && (
               <MediaDisplay
                 revealMedia={revealed}
-                autoplayAudio={revealed && q.answer_play_audio === true}
+                autoplayAudio={revealed && (q.answer_play_audio === true || q.content_type === 'video')}
                 noAV={isAdminView}
                 question={
                   revealed && q.answer_media_urls?.length
@@ -470,9 +467,13 @@ export function ShowAnswers({ gameState, config, isAdminView = false, answers = 
         ) : (
           <button className="btn btn-primary" onClick={() => {
             if (step < total - 1) setPhase('show_answers', step + 1, { step_data: { revealed: false } })
+            else if (!hasNextRound(config.number)) {
+              // Последний раунд игры: промежуточное табло не нужно — сразу финальные итоги
+              updateGameState({ status: 'finale', current_round: 0, current_step: 0, show_scoreboard: false, step_data: {} })
+            }
             else setPhase('scoreboard', 0, { show_scoreboard: true })
           }}>
-            {step < total - 1 ? 'СЛЕДУЮЩИЙ ВОПРОС →' : 'К ТАБЛО →'}
+            {step < total - 1 ? 'СЛЕДУЮЩИЙ ВОПРОС →' : hasNextRound(config.number) ? 'К ТАБЛО →' : 'ФИНАЛЬНЫЕ ИТОГИ →'}
           </button>
         )}
       </div>
@@ -701,6 +702,32 @@ export function qNumber(config, step) {
   return { num, total }
 }
 
+
+// Слайд правил с опциональной озвучкой (config.rules_audio = '/media/voice_rules_rX.mp3')
+function RulesSlide({ config, back, next }) {
+  useEffect(() => {
+    if (!config.rules_audio || document.hidden) return
+    const audio = new Audio(mediaSrc(config.rules_audio))
+    audio.play().catch(() => {})
+    return () => audio.pause()
+  }, [config.number])
+
+  return (
+    <Slide>
+      <div className="mono-tag">РАУНД {pad(config.number)} :: ПРАВИЛА</div>
+      <div className="card hud-frame" style={{ maxWidth: '82vw', width: '100%' }}>
+        <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {config.rules.map((rule, i) => (
+            <li key={i} className="rule-line" style={{ ...S.ruleItem, animationDelay: `${i * 0.4}s` }}>
+              <span style={S.ruleNum}>{pad(i + 1)}</span>{rule}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <NavButtons onBack={back} onNext={next} nextLabel="НАЧАТЬ →" />
+    </Slide>
+  )
+}
 
 export function Slide({ children }) {
   return (

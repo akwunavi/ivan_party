@@ -54,20 +54,20 @@ export default function MediaDisplay({ question, showText = true, typewriter = f
       {/* КАРТИНКИ — сетка занимает всё оставшееся место, никогда не вылезает */}
       {hasImages && (
         <div style={{ flex: 1, minHeight: 0, width: '100%' }}>
-          <ImageGrid urls={media_urls} />
+          <ImageGrid urls={media_urls} fit={question.image_fit || (media_urls.length === 2 ? 'cover' : 'contain')} />
         </div>
       )}
 
       {/* Варианты сопоставления (буква — текст) — отдельным аккуратным списком ПОД картинками */}
       {variantLines.length > 0 && (
         <div style={{
-          display: 'flex', flexWrap: 'wrap', gap: '10px 28px', justifyContent: 'center',
-          flexShrink: 0, maxWidth: 900,
+          display: 'flex', flexWrap: 'wrap', gap: '14px 32px', justifyContent: 'center',
+          flexShrink: 0, maxWidth: 1000,
         }}>
           {variantLines.map((line, i) => (
             <div key={i} style={{
-              fontFamily: 'Rajdhani, sans-serif', fontSize: 'clamp(18px, 2.2vw, 26px)',
-              fontWeight: 600, color: '#ccc',
+              fontFamily: 'Rajdhani, sans-serif', fontSize: 'clamp(22px, 2.7vw, 32px)',
+              fontWeight: 700, color: '#ddd',
             }}>{line}</div>
           ))}
         </div>
@@ -104,7 +104,7 @@ export default function MediaDisplay({ question, showText = true, typewriter = f
 
 // Автосетка картинок: вся сетка занимает фикс. высоту, делится на ряды —
 // при любом количестве картинок ВСЕ видны на экране без прокрутки.
-function ImageGrid({ urls }) {
+function ImageGrid({ urls, fit = 'contain' }) {
   const count = urls.length
 
   // До 5 картинок — в ОДИН ряд; дальше — сетка
@@ -140,18 +140,18 @@ function ImageGrid({ urls }) {
             style={{
               maxWidth: '100%',
               maxHeight: '100%',
-              objectFit: 'contain',
+              objectFit: fit,
               display: 'block',
             }}
           />
           {count > 1 && (
             <div style={{
-              position: 'absolute', top: 6, left: 6,
-              background: 'rgba(0,0,0,0.7)',
+              position: 'absolute', top: 8, left: 8,
+              background: 'rgba(0,0,0,0.75)',
               color: '#ea580c',
-              fontFamily: 'Share Tech Mono, monospace',
-              fontSize: 12, padding: '2px 8px',
-              borderLeft: '2px solid #ea580c'
+              fontFamily: 'Orbitron, monospace', fontWeight: 700,
+              fontSize: 20, padding: '4px 12px',
+              borderLeft: '3px solid #ea580c'
             }}>
               {i + 1}
             </div>

@@ -92,7 +92,7 @@ function JeopardyForm({ team, gameState }) {
         <button onClick={submit} disabled={sends >= 2 || !text.trim()} style={P.submitBtn(sends, !text.trim())}>
           {sends === 0 ? 'ОТПРАВИТЬ' : sends === 1 ? 'ИЗМЕНИТЬ' : '✓ ОТВЕТ ЗАФИКСИРОВАН'}
         </button>
-        <div style={{ ...P.mono, textAlign: 'center', color: '#333' }}>КТО БЫСТРЕЕ</div>
+        <div style={{ ...P.mono, textAlign: 'center', color: '#333' }}>КТО БЫСТРЕЕ — ВЕДУЩИЙ ВИДИТ ВРЕМЯ</div>
       </div>
     </div>
   )
@@ -239,7 +239,7 @@ function AnswerForm({ team, gameState }) {
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 14px', display: 'flex', flexDirection: 'column', gap: 14 }}>
         {!accepting && (
-          <div style={P.notice}>СЛУШАЙ ВОПРОСЫ — ОТВЕТЫ НА РАНЕЕ ЗАДАННЫЕ ВОПРОСЫ МОЖНО ВНОСИТЬ И ПРАВИТЬ ВЕСЬ РАУНД</div>
+          <div style={P.notice}>СЛУШАЙ ВОПРОСЫ — ОТВЕТЫ МОЖНО ВНОСИТЬ И ПРАВИТЬ ВЕСЬ РАУНД</div>
         )}
 
         {(() => { let num = 0; return questions.map((q, i) => {
@@ -472,19 +472,23 @@ function OrderPicker({ q, value, locked, onChange, onClear }) {
       <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: '#555' }}>
         ТАПАЙ БУКВЫ В ПРАВИЛЬНОМ ПОРЯДКЕ
       </div>
+      {/* П.2: кнопки БЕЗ атрибута disabled — он сбрасывает фокус, и мобильный
+          браузер дёргает страницу (прыжок при тапе). Защита от повторного
+          выбора — внутри обработчика tap(), выглядит так же (приглушённая). */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {q.choices.map(c => (
-          <button key={c.key} disabled={locked || picked.includes(c.key)} onClick={() => tap(c.key)} style={{
+          <button key={c.key} onClick={() => tap(c.key)} style={{
             padding: '12px 14px', border: `2px solid ${picked.includes(c.key) ? '#1a1a1a' : '#333'}`,
             background: 'transparent', color: picked.includes(c.key) ? '#333' : '#ccc',
-            fontFamily: 'Rajdhani, sans-serif', fontSize: 16, fontWeight: 700, cursor: 'pointer',
-            textAlign: 'left',
+            fontFamily: 'Rajdhani, sans-serif', fontSize: 16, fontWeight: 700,
+            cursor: picked.includes(c.key) ? 'default' : 'pointer',
+            textAlign: 'left', touchAction: 'manipulation',
           }}>
             <span style={{ color: picked.includes(c.key) ? '#333' : '#ea580c' }}>{c.key}</span> {c.text}
           </button>
         ))}
       </div>
-      {/* Собранный порядок */}
+      {/* Собранный порядок — «Сброс» зарезервирован всегда (visibility), чтобы блок не менял размер */}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', minHeight: 44 }}>
         {picked.length === 0
           ? <span style={{ color: '#333', fontSize: 13 }}>порядок пуст</span>
@@ -495,12 +499,11 @@ function OrderPicker({ q, value, locked, onChange, onClear }) {
               fontFamily: 'Orbitron, monospace', fontSize: 18, fontWeight: 700,
             }}>{k}</span>
           ))}
-        {picked.length > 0 && !locked && (
-          <button onClick={onClear} style={{
-            padding: '8px 12px', border: '1px solid #333', background: 'transparent',
-            color: '#888', cursor: 'pointer', fontFamily: 'Share Tech Mono, monospace', fontSize: 11,
-          }}>СБРОС</button>
-        )}
+        <button onClick={onClear} style={{
+          padding: '8px 12px', border: '1px solid #333', background: 'transparent',
+          color: '#888', cursor: 'pointer', fontFamily: 'Share Tech Mono, monospace', fontSize: 11,
+          visibility: picked.length > 0 && !locked ? 'visible' : 'hidden',
+        }}>СБРОС</button>
       </div>
     </div>
   )

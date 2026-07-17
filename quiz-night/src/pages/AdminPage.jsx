@@ -9,8 +9,7 @@ import {
   awardPoints, markAnswer, doubleRoundScore, resetGame, publishRandomGroups,
 } from '../lib/gameActions'
 import { advance, goBack, setPhase } from '../lib/roundFlow'
-import { ShowAnswers } from '../components/RoundShell'
-import { ROUND_CONFIGS, DISABLED_ROUNDS } from '../lib/roundsRegistry'
+import { ROUND_CONFIGS, DISABLED_ROUNDS, TOTAL_ROUNDS } from '../lib/roundsRegistry'
 
 const ADMIN_KEY = import.meta.env.VITE_ADMIN_KEY
 
@@ -92,7 +91,7 @@ const TEAM_COLORS = ['#ea580c', '#3b82f6', '#22c55e', '#a855f7', '#ec4899', '#ea
 // система тасует и распределяет случайно, создаёт команды с этим составом.
 function TeamRandomizer() {
   const [namesText, setNamesText] = useState('')
-  const [teamCount, setTeamCount] = useState(4)
+  const [teamCount, setTeamCount] = useState('4')  // строка: свободный ввод с телефона, валидация при «Перемешать»
   const [preview, setPreview] = useState(null) // [[имена группы 1], [группы 2], ...]
   const [publishing, setPublishing] = useState(false)
   const [open, setOpen] = useState(false)
@@ -101,8 +100,9 @@ function TeamRandomizer() {
     const names = namesText.split('\n').map(s => s.trim()).filter(Boolean)
     if (names.length === 0) return
     const shuffled = [...names].sort(() => Math.random() - 0.5)
-    const groups = Array.from({ length: teamCount }, () => [])
-    shuffled.forEach((name, i) => groups[i % teamCount].push(name))
+    const n = Math.max(2, Math.min(8, parseInt(teamCount, 10) || 2))
+    const groups = Array.from({ length: n }, () => [])
+    shuffled.forEach((name, i) => groups[i % n].push(name))
     setPreview(groups)
   }
 
@@ -128,9 +128,10 @@ function TeamRandomizer() {
             style={{ background: '#151515', border: '1px solid #333', color: '#fff', padding: '10px 12px', fontFamily: 'Inter, sans-serif', fontSize: 14, resize: 'vertical' }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={A.dim}>КОМАНД:</span>
-            <input type="number" min={2} max={6} value={teamCount}
-              onChange={e => { setTeamCount(Math.max(2, Math.min(6, Number(e.target.value) || 2))); setPreview(null) }}
-              style={{ width: 60, background: '#151515', border: '1px solid #333', color: '#fff', padding: '6px 10px', fontFamily: 'Orbitron, monospace', fontSize: 16, textAlign: 'center' }} />
+            <input type="text" inputMode="numeric" value={teamCount}
+              onChange={e => { setTeamCount(e.target.value.replace(/[^0-9]/g, '')); setPreview(null) }}
+              placeholder="2-8"
+              style={{ width: 60, background: '#151515', border: '1px solid #333', color: '#fff', padding: '10px', fontFamily: 'Orbitron, monospace', fontSize: 18, textAlign: 'center' }} />
             <button onClick={shuffle} style={A.btn('#ea580c')}>🎲 ПЕРЕМЕШАТЬ</button>
           </div>
 
@@ -200,8 +201,12 @@ function AdminRoundView({ gameState, config, round, teams, answers, refetchAnswe
     }
 
     const stake = Number(a.stake ?? 0)
+    // Синхронизировано с RoundShell.grade(): финальный вопрос (угадай тему)
+    // сам баллов не даёт — только триггерит удвоение раунда ниже.
+    const isFinal = config.questions[Number(a.question_ref.split('-q')[1])]?.is_final_question
     let delta
     if (ptsOverride != null) delta = correct ? ptsOverride : 0
+    else if (isFinal) delta = 0
     else if (config.stakesRound) delta = correct ? stake + 1 : -stake
     else delta = correct ? (config.pointsPerQuestion ?? 1) : 0
     await markAnswer(a.id, correct, delta)
@@ -218,13 +223,18 @@ function AdminRoundView({ gameState, config, round, teams, answers, refetchAnswe
         await awardPoints(a.team_id, round, `r${round}-block${block}-bonus`, config.blockBonus ?? 1, 'block_bonus')
       }
     }
+
+    // Тематический раунд: верный финальный ответ → автоудвоение суммы раунда
+    if (config.questions[qiForBonus]?.is_final_question && correct) {
+      await doubleRoundScore(a.team_id, round)
+    }
   }
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
 
       {status === 'show_answers' && config && (
-        <ShowAnswers gameState={gameState} config={config} isAdminView={true} answers={answers} autoGrade={false} />
+        <AdminAnswersView gameState={gameState} config={config} answers={answers} onGrade={grade} />
       )}
 
       {status === 'answer_time' && round === 3 && (
@@ -321,6 +331,81 @@ function AnsweredIndicator({ gameState, config, answers, teams }) {
             {done ? '✓ ' : ''}{team.name}
           </span>
         ))}
+      </div>
+    </div>
+  )
+}
+
+// ═══ П.4: КОМПАКТНЫЙ ЭКРАН ОТВЕТОВ ДЛЯ ТЕЛЕФОНА ВЕДУЩЕГО ═══
+// Без текста вопроса и ответа (ведущий их знает + видит проектор).
+// Только: номер вопроса, ответы команд, крупные кнопки ✓/✗ под каждым.
+function AdminAnswersView({ gameState, config, answers, onGrade }) {
+  const step = gameState.current_step
+  const total = config.questions.length
+  const teamAnswers = answers.filter(a => a.question_ref === `r${config.number}-q${step}`)
+
+  function goNext() {
+    if (step < total - 1) setPhase('show_answers', step + 1, { step_data: { revealed: false } })
+    else if (config.number >= TOTAL_ROUNDS) {
+      // последний раунд — сразу финал (как на проекторе)
+      updateGameState({ status: 'finale', current_round: 0, current_step: 0, show_scoreboard: false, step_data: {} })
+    }
+    else setPhase('scoreboard', 0, { show_scoreboard: true })
+  }
+  function goPrev() {
+    if (step > 0) setPhase('show_answers', step - 1, { step_data: { revealed: false } })
+  }
+
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 14, gap: 12, overflowY: 'auto' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 20, fontWeight: 700, color: '#ea580c' }}>
+          ОТВЕТЫ КОМАНД
+        </div>
+        <div style={A.dim}>ВОПРОС {step + 1} / {total}</div>
+      </div>
+
+      {teamAnswers.length === 0 && (
+        <div style={{ color: '#555', fontSize: 15, textAlign: 'center', padding: 20 }}>ответов нет</div>
+      )}
+
+      {teamAnswers.map(a => (
+        <div key={a.id} style={{
+          background: '#111', border: '1px solid #2a2a2a',
+          borderLeft: `4px solid ${a.is_correct === true ? '#22c55e' : a.is_correct === false ? '#ef4444' : (a.teams?.color || '#333')}`,
+          padding: 12, display: 'flex', flexDirection: 'column', gap: 10,
+        }}>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'baseline', flexWrap: 'wrap' }}>
+            <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 16, fontWeight: 700, color: a.teams?.color || '#ea580c' }}>
+              {a.teams?.name}
+            </span>
+            <span style={{ fontSize: 18, color: '#fff', fontWeight: 600 }}>
+              {a.answer_text || '—'}
+              {a.stake != null && <span style={{ color: '#ea580c', fontSize: 13 }}> · ст.{a.stake}</span>}
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => onGrade(a, true)} style={{
+              flex: 1, padding: '14px 0', border: 'none', cursor: 'pointer',
+              background: a.is_correct === true ? '#22c55e' : '#143620',
+              color: a.is_correct === true ? '#000' : '#22c55e',
+              fontFamily: 'Rajdhani, sans-serif', fontSize: 17, fontWeight: 700,
+            }}>✓ ВЕРНО</button>
+            <button onClick={() => onGrade(a, false)} style={{
+              flex: 1, padding: '14px 0', border: 'none', cursor: 'pointer',
+              background: a.is_correct === false ? '#ef4444' : '#3a1414',
+              color: a.is_correct === false ? '#fff' : '#ef4444',
+              fontFamily: 'Rajdhani, sans-serif', fontSize: 17, fontWeight: 700,
+            }}>✗ НЕВЕРНО</button>
+          </div>
+        </div>
+      ))}
+
+      <div style={{ display: 'flex', gap: 8, marginTop: 'auto', paddingTop: 8 }}>
+        <button onClick={goPrev} style={A.btn('#555')}>← НАЗАД</button>
+        <button onClick={goNext} style={A.btn('#ea580c')}>
+          {step < total - 1 ? 'СЛЕД. ВОПРОС →' : config.number >= TOTAL_ROUNDS ? 'ФИНАЛ →' : 'К ТАБЛО →'}
+        </button>
       </div>
     </div>
   )

@@ -7,6 +7,7 @@ export const ROUND1 = {
   titleLines: ['ФИЛЬМЫ', 'И СЕРИАЛЫ'],
   metaLine: '10 ВОПРОСОВ · 30 СЕК · 1 БАЛЛ',
   timerSeconds: 30,
+  rules_audio: '/media/voices_1.jpg',
   hasRepeats: false,            // ← сам включаешь/выключаешь
   autoAdvanceQuestions: true, // вопросы листает ведущий
   rules: [
@@ -21,6 +22,7 @@ questions: [
       content_type: 'text',
       question_text: 'В этом фильме 2009 года время на разных уровнях повествования течет с разной скоростью. Эту идею авторы подчеркнули не только монтажом, но и музыкой: знаменитая оркестровая тема была построена таким образом, чтобы отражать сильно замедленное звучание композиции, которая неоднократно появляется в самом сюжете. Назовите фильм.',
       media_urls: [],
+      voice_audio: '/media/voices/1_1.mp3',
       choices: null,
       correct_answer: 'Начало',
     },
@@ -31,6 +33,7 @@ questions: [
 '/media/r1.1_2.jpg',
 '/media/r1.1_3.jpg',
 '/media/r1.1_4.jpg'],
+ voice_audio: '/media/voices/1_2.mp3',
       correct_answer: 'Джентельмены',
     },
     {
@@ -44,6 +47,7 @@ questions: [
       question_text: `Угадайте фильм по его шуточному описанию?
 Куча мужиков собираются в клуб, чтобы дружно стать фаршем. Отличный фильм и ни одной повесточки – куча белых натуралов превращаются из просто клуба по интересам с опасную банду на пердящих харлеях`,
       answer_media_urls: ['/media/ans_r1_4.jpg'],
+       voice_audio: '/media/voices/1_4.mp3',
       choices: null,
       correct_answer: 'Байкеры',
     },
@@ -51,6 +55,7 @@ questions: [
       content_type: 'image',
       question_text: 'Минималистичный постер к какому фильму 1979 года вы видите?',
       media_urls: ['/media/r1.4_1.jpg'],
+       voice_audio: '/media/voices/1_5.mp3',
       answer_media_urls:['/media/ans_r1_4_1.jpg'],
       correct_answer: 'Апокалипсис сегодня',
     },
@@ -61,12 +66,14 @@ questions: [
 '/media/r1.6_2.jpg',
 '/media/r1.6_3.jpg'],
 answer_media_urls:['/media/ans_r1_6_1.jpg'],
+ voice_audio: '/media/voices/1_6.mp3',
       correct_answer: 'Сабрина-маленькая ведьма',
     },
     {
       content_type: 'text',
       question_text: 'Название этого фильма никак не связано с внешностью человека. На самом деле оно отсылает к сорту цветка, который зритель видит на протяжении всей картины, хотя большинство воспринимает его лишь как элемент декора. Назовите фильм.',
       media_urls: ['media/ans_r1_7_1.jpg'],
+       voice_audio: '/media/voices/1_7.mp3',
       choices: null,
       correct_answer: 'Красота по-американски',
     },    
@@ -85,6 +92,7 @@ answer_media_urls:['/media/ans_r1_6_1.jpg'],
 '/media/r1.9_3.jpg',
 '/media/r1.9_4.jpg'],
 answer_media_urls:['/media/ans_r1_9_1.jpg'],
+ voice_audio: '/media/voices/1_9.mp3',
       correct_answer: 'Форрест Гамп',
     },
         {
@@ -93,6 +101,7 @@ answer_media_urls:['/media/ans_r1_9_1.jpg'],
       media_urls: [],
       choices: null,
       answer_media_urls:['/media/ans_r1_10.jpg'],
+       voice_audio: '/media/voices/1_10.mp3',
       correct_answer: 'Декстер',
     },  
     // ...добавляй до 10

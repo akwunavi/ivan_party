@@ -57,6 +57,7 @@ export const ROUND0 = {
       content_type: 'text',
       question_text: 'Расположите эти произведения по порядку выхода от старого к новому',
       order_answer: true,
+      voice_audio: '/media/voices/0_5.mp3',
       choices: [
         {key: 'А', text: 'Мертвые души'},
         {key: 'Б', text: 'Герой нашего времени'},
@@ -74,6 +75,7 @@ export const ROUND0 = {
       В - Альпаха
       Г - Американский бульдог`,
       media_urls: ['/media/ans_r0_5_1.jpg', '/media/ans_r0_5_2.jpg', '/media/ans_r0_5_3.jpg', '/media/ans_r0_5_4.jpg'],
+      voice_audio: '/media/voices/0_6.mp3',
       match_pairs: {left: ['1', '2', '3', '4'], right: ['А', 'Б', 'В', 'Г']}, 
       correct_pairs: ['1Б', '2В', '3А' , '4Г'], 
       correct_answer: ['Б - Английский бульдог', 'В - Альпаха', 'А - Континентальный бульдог', 'Г - Американский бульдог']
