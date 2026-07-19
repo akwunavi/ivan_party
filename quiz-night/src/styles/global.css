@@ -343,3 +343,43 @@ body {
   content: ''; position: absolute; left: 50%; top: 100%;
   width: 1px; height: 34px; background: rgba(255,255,255,0.35);
 }
+
+/* ═══ ФИНАЛ: ФЕЙЕРВЕРК ═══
+   Залп = точка, из которой разлетаются искры по кругу. Каждая искра летит
+   по своему углу (--a) и гаснет. Вторая половина цикла — пауза, поэтому
+   залпы «бахают» ритмично, а не мельтешат непрерывно. */
+@keyframes fwSpark {
+  0%   { transform: rotate(var(--a)) translateY(0) scaleY(1); opacity: 0; }
+  5%   { opacity: 1; }
+  45%  { transform: rotate(var(--a)) translateY(-11vh) scaleY(0.5); opacity: 0.9; }
+  55%, 100% { transform: rotate(var(--a)) translateY(-13vh) scaleY(0.2); opacity: 0; }
+}
+.fw-burst { position: absolute; width: 0; height: 0; }
+.fw-spark {
+  position: absolute; left: -2px; top: -8px;
+  width: 4px; height: 16px; border-radius: 2px;
+  transform-origin: 2px 8px;
+  animation: fwSpark var(--dur) ease-out infinite;
+  animation-delay: var(--delay);
+  opacity: 0;
+}
+/* Вспышка в центре залпа в момент «взрыва» */
+@keyframes fwFlash {
+  0% { transform: scale(0); opacity: 0.9; }
+  12% { transform: scale(1); opacity: 0.6; }
+  25%, 100% { transform: scale(1.4); opacity: 0; }
+}
+.fw-flash {
+  position: absolute; left: -30px; top: -30px;
+  width: 60px; height: 60px; border-radius: 50%;
+  animation: fwFlash var(--dur) ease-out infinite;
+  animation-delay: var(--delay);
+  opacity: 0;
+}
+
+
+/* ═══ Скроллбары на проекторе/ТВ не показываем НИКОГДА ═══
+   Прокрутка как механизм остаётся (страховка от обрезания контента),
+   но полоса не рисуется — на телевизоре её быть не должно. */
+.grid-bg { scrollbar-width: none; -ms-overflow-style: none; }
+.grid-bg::-webkit-scrollbar { display: none; width: 0; height: 0; }

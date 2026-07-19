@@ -40,8 +40,8 @@ export default function Lobby({ gameState }) {
           fontWeight: 700, lineHeight: 0.92,
           letterSpacing: '-0.02em', color: '#fff'
         }}>
-          IVAN<br />
-          <span style={{ color: '#ea580c' }}>QUIZ#8</span>
+          QUIZ<br />
+          <span style={{ color: '#ea580c' }}>NIGHT</span>
         </div>
       </div>
 
@@ -152,7 +152,7 @@ export default function Lobby({ gameState }) {
         <button className="btn btn-primary" style={{ fontSize: 26, padding: '18px 48px' }}
           onClick={() => updateGameState({
             current_round: 0, current_step: 0, status: 'round_intro',
-            accepting_answers: false, show_scoreboard: false, step_data: {},
+            accepting_answers: false, show_scoreboard: false, step_data: {}, completed_rounds: [],
           })}>
           НАЧАТЬ ИГРУ →
         </button>

@@ -93,7 +93,7 @@ export async function resetGame() {
   await supabase.from('score_log').delete().neq('id', '00000000-0000-0000-0000-000000000000')
   await supabase.from('teams').delete().neq('id', '00000000-0000-0000-0000-000000000000')
   await updateGameState({
-    status: 'lobby', current_round: 0, current_step: 0,
+    status: 'lobby', current_round: 0, current_step: 0, completed_rounds: [],
     accepting_answers: false, show_scoreboard: false,
     step_data: {}, timer_started_at: null,
   })

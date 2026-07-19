@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { pointsLabel } from '../lib/paths'
+import { collectGameStats, sendStatsToTelegram, downloadCsv, telegramConfigured } from '../lib/stats'
+import { isDevMode, seedTeams, seedRoundAnswers } from '../lib/devSeed'
 import { useGameState } from '../hooks/useGameState'
 import { useTeams } from '../hooks/useTeams'
 import { useAnswers } from '../hooks/useAnswers'
@@ -64,18 +66,13 @@ function AdminPanel() {
           ? ` · ${gameState.current_step + 1}/${config.questions.length}` : ''}
       </div>
 
+      <DevSeedPanel gameState={gameState} config={config} />
+
       {(gameState.status === 'lobby') && (
         <RoundPicker current={round} />
       )}
 
-      {gameState.status === 'finale' && (
-        <div style={{ padding: 24, textAlign: 'center' }}>
-          <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 22, color: '#ea580c', marginBottom: 12 }}>
-            ИГРА ЗАВЕРШЕНА
-          </div>
-          <div style={A.dim}>Финальные итоги показаны на проекторе</div>
-        </div>
-      )}
+      {gameState.status === 'finale' && <FinaleAdminPanel />}
 
       {gameState.status !== 'lobby' && gameState.status !== 'finale' && (
         <AdminRoundView gameState={gameState} config={config} round={round} teams={teams} answers={answers} refetchAnswers={refetchAnswers} />
@@ -336,6 +333,85 @@ function AnsweredIndicator({ gameState, config, answers, teams }) {
   )
 }
 
+// ═══ СИД ДЛЯ РЕПЕТИЦИЙ (виден только с ?dev=1) ═══
+function DevSeedPanel({ gameState, config }) {
+  const [msg, setMsg] = useState('')
+  if (!isDevMode()) return null
+
+  async function teams() {
+    const n = await seedTeams()
+    setMsg(n > 0 ? `Создано демо-команд: ${n}` : 'Демо-команды уже есть')
+  }
+  async function fill() {
+    if (!config) { setMsg('Сначала запусти раунд'); return }
+    const n = await seedRoundAnswers(gameState, config)
+    setMsg(n > 0 ? `Записано ответов: ${n}` : 'Нет демо-команд — сначала создай их')
+  }
+
+  return (
+    <div style={{ margin: '0 16px', padding: 10, border: '1px dashed #7f1d1d', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ ...A.dim, color: '#ef4444' }}>DEV · РЕПЕТИЦИЯ</div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button onClick={teams} style={A.btn('#555')}>+ ДЕМО-КОМАНДЫ</button>
+        <button onClick={fill} style={A.btn('#555')}>ЗАПОЛНИТЬ ОТВЕТЫ РАУНДА</button>
+      </div>
+      {msg && <div style={{ ...A.dim, color: '#ccc' }}>{msg}</div>}
+    </div>
+  )
+}
+
+// ═══ ФИНАЛ В АДМИНКЕ: выгрузка статистики ═══
+function FinaleAdminPanel() {
+  const [busy, setBusy] = useState('')
+  const [msg, setMsg] = useState('')
+
+  async function exportCsv() {
+    setBusy('csv'); setMsg('')
+    try {
+      const stats = await collectGameStats()
+      downloadCsv(stats.csv)
+      setMsg('CSV скачан ✓')
+    } catch { setMsg('Ошибка сбора статистики') }
+    setBusy('')
+  }
+
+  async function sendTg() {
+    setBusy('tg'); setMsg('')
+    try {
+      const stats = await collectGameStats()
+      await sendStatsToTelegram(stats)
+      setMsg('Отправлено в Telegram ✓')
+    } catch (e) { setMsg(`Ошибка: ${e.message}`) }
+    setBusy('')
+  }
+
+  return (
+    <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 22, color: '#ea580c', textAlign: 'center' }}>
+        ИГРА ЗАВЕРШЕНА
+      </div>
+      <div style={{ ...A.dim, textAlign: 'center' }}>Финальные итоги показаны на проекторе</div>
+
+      <div style={{ borderTop: '1px solid #222', paddingTop: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={A.dim}>СТАТИСТИКА ИГРЫ (баллы по раундам, % взятия вопросов, все ответы)</div>
+        <button onClick={exportCsv} disabled={!!busy} style={A.btn('#22c55e')}>
+          {busy === 'csv' ? 'СОБИРАЮ...' : '📥 СКАЧАТЬ CSV'}
+        </button>
+        {telegramConfigured ? (
+          <button onClick={sendTg} disabled={!!busy} style={A.btn('#3b82f6')}>
+            {busy === 'tg' ? 'ОТПРАВЛЯЮ...' : '📨 ОТПРАВИТЬ В TELEGRAM'}
+          </button>
+        ) : (
+          <div style={{ ...A.dim, fontSize: 11 }}>
+            Telegram не настроен: добавь VITE_TG_BOT_TOKEN и VITE_TG_CHAT_ID в .env и пересобери
+          </div>
+        )}
+        {msg && <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 14, color: msg.includes('✓') ? '#22c55e' : '#ef4444' }}>{msg}</div>}
+      </div>
+    </div>
+  )
+}
+
 // ═══ П.4: КОМПАКТНЫЙ ЭКРАН ОТВЕТОВ ДЛЯ ТЕЛЕФОНА ВЕДУЩЕГО ═══
 // Без текста вопроса и ответа (ведущий их знает + видит проектор).
 // Только: номер вопроса, ответы команд, крупные кнопки ✓/✗ под каждым.
@@ -348,9 +424,9 @@ function AdminAnswersView({ gameState, config, answers, onGrade }) {
     if (step < total - 1) setPhase('show_answers', step + 1, { step_data: { revealed: false } })
     else if (config.number >= TOTAL_ROUNDS) {
       // последний раунд — сразу финал (как на проекторе)
-      updateGameState({ status: 'finale', current_round: 0, current_step: 0, show_scoreboard: false, step_data: {} })
+      updateGameState({ status: 'finale', current_round: 0, current_step: 0, show_scoreboard: false, step_data: {}, completed_rounds: Array.from(new Set([...(gameState.completed_rounds || []), config.number])) })
     }
-    else setPhase('scoreboard', 0, { show_scoreboard: true })
+    else setPhase('scoreboard', 0, { show_scoreboard: true, completed_rounds: Array.from(new Set([...(gameState.completed_rounds || []), config.number])) })
   }
   function goPrev() {
     if (step > 0) setPhase('show_answers', step - 1, { step_data: { revealed: false } })

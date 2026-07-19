@@ -12,9 +12,11 @@ import Typewriter from './Typewriter'
 // ТОЧНО ТАК ЖЕ, как на обычном табло (см. Scoreboard.jsx). Раньше здесь читался
 // team.total_score напрямую из базы — он ненадёжен (суммирует вообще всё,
 // включая разогрев), из-за чего финал показывал пусто или неверные числа.
-export default function FinaleScreen({ onBackToLobby }) {
+export default function FinaleScreen({ gameState, onBackToLobby }) {
   const teams = useTeams()
   const [byTeamTotal, setByTeamTotal] = useState({})
+  const [byTeamRound, setByTeamRound] = useState({})
+  const [view, setView] = useState('totals')  // 'totals' → через минуту 'breakdown'
 
   useEffect(() => {
     let stop = false
@@ -22,11 +24,20 @@ export default function FinaleScreen({ onBackToLobby }) {
       const { data } = await supabase.from('score_log').select('team_id, round_number, delta')
       if (stop || !data) return
       const totals = {}
+      const perRound = {}
+      // Только раунды, завершённые в ЭТОЙ игре (защита от остатков прошлых
+      // прогонов с теми же командами). Если список пуст — фолбэк на все раунды.
+      const played = gameState?.completed_rounds?.length
+        ? new Set(gameState.completed_rounds) : null
       data.forEach(r => {
-        if (r.round_number < 1 || r.round_number > TOTAL_ROUNDS) return // разогрев не считаем
+        if (r.round_number < 1 || r.round_number > TOTAL_ROUNDS) return
+        if (played && !played.has(r.round_number)) return
         totals[r.team_id] = (totals[r.team_id] || 0) + Number(r.delta)
+        perRound[r.team_id] = perRound[r.team_id] || {}
+        perRound[r.team_id][r.round_number] = (perRound[r.team_id][r.round_number] || 0) + Number(r.delta)
       })
       setByTeamTotal(totals)
+      setByTeamRound(perRound)
     }
     load()
     const t = setInterval(load, 3000)
@@ -65,9 +76,21 @@ export default function FinaleScreen({ onBackToLobby }) {
   const revealedFromIdx = sorted.length - revealedCount
   const showConfetti = revealedCount >= sorted.length && sorted.length > 0
 
+  useEffect(() => {
+    if (!showConfetti) return
+    const t = setTimeout(() => setView('breakdown'), 60000)
+    return () => clearTimeout(t)
+  }, [showConfetti])
+
+  // Раунды для колонок разбивки: только реально отыгранные
+  const playedList = (gameState?.completed_rounds?.length
+    ? [...gameState.completed_rounds] : Array.from({ length: TOTAL_ROUNDS }, (_, i) => i + 1)
+  ).sort((a, b) => a - b)
+  const fmt = v => v == null ? '·' : (v % 1 === 0 ? v : v.toFixed(1))
+
   return (
     <div className="grid-bg flex-center flex-col" style={{ height: '100vh', overflow: 'hidden', gap: 28, padding: 40, position: 'relative', display: 'flex' }}>
-      {showConfetti && <Confetti />}
+      {showConfetti && <Fireworks />}
 
       <div className="mono-tag" style={{ fontSize: 16, letterSpacing: '0.3em' }}>ИГРА ЗАВЕРШЕНА</div>
       <h1 className="neon-title glitch-title" style={{
@@ -83,7 +106,32 @@ export default function FinaleScreen({ onBackToLobby }) {
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14, width: '100%', maxWidth: 800, marginTop: 20 }}>
+      {view === 'breakdown' && (
+        <table style={{ borderCollapse: 'collapse', minWidth: '70vw' }}>
+          <thead>
+            <tr style={{ borderBottom: '2px solid var(--accent)' }}>
+              <th style={{ ...FB.h, textAlign: 'left' }}>КОМАНДА</th>
+              {playedList.map(rn => <th key={rn} style={FB.h}>Р{rn}</th>)}
+              <th style={{ ...FB.h, color: 'var(--accent)' }}>ИТОГО</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.map((team, i) => (
+              <tr key={team.id} style={{ borderBottom: '1px solid #222', background: i === 0 ? 'rgba(234,88,12,0.08)' : 'transparent' }}>
+                <td style={{ ...FB.c, textAlign: 'left', color: team.color || '#fff', fontFamily: 'Russo One, Rajdhani, sans-serif' }}>
+                  {i === 0 ? '🥇 ' : i === 1 ? '🥈 ' : i === 2 ? '🥉 ' : `${i + 1}. `}{team.name}
+                </td>
+                {playedList.map(rn => (
+                  <td key={rn} style={FB.c}>{fmt(byTeamRound[team.id]?.[rn])}</td>
+                ))}
+                <td style={{ ...FB.c, color: 'var(--accent)', fontFamily: 'Orbitron, monospace', fontWeight: 700 }}>{fmt(totalOf(team.id))}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      <div style={{ display: view === 'totals' ? 'flex' : 'none', flexDirection: 'column', gap: 14, width: '100%', maxWidth: 800, marginTop: 20 }}>
         {sorted.map((team, idx) => {
           const place = idx + 1
           const isRevealed = idx >= revealedFromIdx
@@ -120,50 +168,52 @@ export default function FinaleScreen({ onBackToLobby }) {
       </div>
 
       {showConfetti && (
-        <button className="btn btn-primary" style={{ marginTop: 20 }} onClick={onBackToLobby}>
-          В ЛОББИ
-        </button>
+        <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
+          <button className="btn btn-ghost" onClick={() => setView(v => v === 'totals' ? 'breakdown' : 'totals')}>
+            {view === 'totals' ? 'РАЗБИВКА ПО РАУНДАМ' : 'К ИТОГАМ'}
+          </button>
+          <button className="btn btn-primary" onClick={onBackToLobby}>В ЛОББИ</button>
+        </div>
       )}
     </div>
   )
 }
 
-function Confetti() {
-  const colors = ['#ea580c', '#22d3ee', '#22c55e', '#fff', '#f59e0b']
-  // Конфетти: duration = полный пролёт экрана; отрицательных задержек нет,
-  // каждая частица честно долетает до низа перед новым циклом.
-  const pieces = Array.from({ length: 40 }, (_, i) => ({
+const FB = {
+  h: { fontFamily: 'Share Tech Mono, monospace', fontSize: 16, color: '#888', padding: '10px 18px', letterSpacing: '0.15em' },
+  c: { fontFamily: 'Rajdhani, sans-serif', fontSize: 26, fontWeight: 700, color: '#eee', padding: '12px 18px', textAlign: 'center' },
+}
+
+function Fireworks() {
+  // 6 залпов в разных точках верхней половины экрана, по краям от таблицы.
+  // У каждого свой цвет, задержка и ритм — выглядит как настоящий салют.
+  const colors = ['#ea580c', '#22d3ee', '#22c55e', '#f59e0b', '#ec4899', '#a855f7']
+  const bursts = Array.from({ length: 6 }, (_, i) => ({
     id: i,
-    left: Math.random() < 0.5 ? Math.random() * 15 : 85 + Math.random() * 15, // по краям
-    delay: Math.random() * 4,
-    duration: 4.5 + Math.random() * 2.5,
+    left: i % 2 === 0 ? 6 + Math.random() * 16 : 76 + Math.random() * 16,
+    top: 12 + Math.random() * 38,
+    delay: i * 0.7 + Math.random() * 0.5,
+    dur: 2.6 + Math.random() * 0.8,
     color: colors[i % colors.length],
   }))
-  // П.7: шарики! Поднимаются снизу по краям, не мешая таблице в центре.
-  const balloons = Array.from({ length: 8 }, (_, i) => ({
-    id: i,
-    left: i % 2 === 0 ? 2 + Math.random() * 10 : 86 + Math.random() * 10,
-    delay: Math.random() * 5,
-    duration: 8 + Math.random() * 5,
-    color: colors[i % colors.length],
-  }))
+  const SPARKS = 14
   return (
     <>
-      {pieces.map(p => (
-        <div key={`c${p.id}`} className="confetti-piece" style={{
-          left: `${p.left}%`,
-          background: p.color,
-          animationDelay: `${p.delay}s`,
-          animationDuration: `${p.duration}s`,
-        }} />
-      ))}
-      {balloons.map(b => (
-        <div key={`b${b.id}`} className="balloon" style={{
-          left: `${b.left}%`,
-          background: `radial-gradient(circle at 35% 30%, ${b.color}, ${b.color}99)`,
-          animationDelay: `${b.delay}s`,
-          animationDuration: `${b.duration}s`,
-        }} />
+      {bursts.map(b => (
+        <div key={b.id} className="fw-burst" style={{ left: `${b.left}%`, top: `${b.top}%` }}>
+          <div className="fw-flash" style={{
+            '--dur': `${b.dur}s`, '--delay': `${b.delay}s`,
+            background: `radial-gradient(circle, ${b.color}, transparent 70%)`,
+          }} />
+          {Array.from({ length: SPARKS }, (_, s) => (
+            <div key={s} className="fw-spark" style={{
+              '--a': `${Math.round(s * (360 / SPARKS))}deg`,
+              '--dur': `${b.dur}s`,
+              '--delay': `${b.delay}s`,
+              background: `linear-gradient(${b.color}, transparent)`,
+            }} />
+          ))}
+        </div>
       ))}
     </>
   )

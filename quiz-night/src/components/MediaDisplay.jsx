@@ -23,16 +23,18 @@ export default function MediaDisplay({ question, showText = true, typewriter = f
 
   // П.9: адаптивный размер — длинный текст автоматически мельче, короткий крупный
   const len = (titleText || '').length
-  const bigSize   = hasImages ? 'clamp(18px, 2.2vw, 28px)' : 'clamp(32px, 4.8vw, 60px)'
-  const midSize   = hasImages ? 'clamp(16px, 1.9vw, 24px)' : 'clamp(26px, 3.4vw, 44px)'
-  const smallSize = hasImages ? 'clamp(14px, 1.6vw, 20px)' : 'clamp(20px, 2.5vw, 34px)'
+  // Текст без картинок занимает свободный экран: масштаб от vw, потолки высокие —
+  // на большом телевизоре читается издалека даже с плохим зрением
+  const bigSize   = hasImages ? 'clamp(18px, 2.2vw, 28px)' : 'clamp(40px, 6vw, 96px)'
+  const midSize   = hasImages ? 'clamp(16px, 1.9vw, 24px)' : 'clamp(32px, 4.6vw, 72px)'
+  const smallSize = hasImages ? 'clamp(14px, 1.6vw, 20px)' : 'clamp(26px, 3.4vw, 52px)'
   const textStyle = {
     fontFamily: 'Russo One, Rajdhani, sans-serif',
     fontSize: len <= 70 ? bigSize : len <= 160 ? midSize : smallSize,
     textAlign: 'center',
     lineHeight: 1.35,
     color: '#fff',
-    maxWidth: 1200,
+    maxWidth: '86vw',
     letterSpacing: '0.01em',
     flexShrink: 0,
     whiteSpace: 'pre-line',   // П.3: \n в тексте = перенос строки (описание фильма и т.п.)

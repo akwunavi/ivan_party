@@ -5,7 +5,11 @@ import { supabase } from '../lib/supabase'
 import { updateGameState } from '../lib/gameActions'
 import { DISABLED_ROUNDS, TOTAL_ROUNDS } from '../lib/roundsRegistry'
 
-export default function Scoreboard({ roundNumber }) {
+export default function Scoreboard({ roundNumber, gameState }) {
+  // П.2 (сессии-лайт): в зачёт идут ТОЛЬКО раунды, завершённые в текущей игре,
+  // плюс текущий. Старые записи score_log от прошлых прогонов с теми же
+  // командами физически остаются в базе, но в «Итого» не попадают.
+  const playedRounds = new Set([...(gameState?.completed_rounds || []), roundNumber])
   const teams = useTeams()
 
   // П.5: раскрытие интригой — с последнего места, по одной команде каждые 2.2с.
@@ -35,7 +39,7 @@ export default function Scoreboard({ roundNumber }) {
   // ни в сумму, ни в распределение мест, что бы ни лежало в total_score.
   const battleTotal = (teamId) =>
     Object.entries(byRound[teamId] || {})
-      .filter(([rn]) => Number(rn) >= 1 && Number(rn) <= TOTAL_ROUNDS)
+      .filter(([rn]) => Number(rn) >= 1 && Number(rn) <= TOTAL_ROUNDS && playedRounds.has(Number(rn)))
       .reduce((s, [, pts]) => s + pts, 0)
 
   const sorted = [...teams].sort((a, b) => battleTotal(b.id) - battleTotal(a.id))
@@ -118,6 +122,7 @@ export default function Scoreboard({ roundNumber }) {
                     </span>
                   </td>
                   {Array.from({ length: TOTAL_ROUNDS }, (_, i) => i + 1).filter(rn => rn <= roundNumber).map(rn => {
+                    if (!playedRounds.has(rn)) return <td key={rn} style={{ ...T.cell, color: '#333' }}>·</td>
                     const pts = rounds[rn]
                     return (
                       <td key={rn} style={{ ...T.cell, textAlign: 'center', fontFamily: 'Orbitron, monospace', fontSize: 26, color: pts == null ? '#333' : pts < 0 ? '#ef4444' : '#ddd' }}>

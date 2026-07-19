@@ -351,7 +351,7 @@ export function ShowAnswers({ gameState, config, isAdminView = false, answers = 
         <h1 className="neon-title glitch-title" style={{ fontFamily: 'Russo One, sans-serif', fontSize: 'clamp(48px, 8vw, 110px)', textAlign: 'center', color: '#fff' }}>{q.title}</h1>
         <NavButtons onNext={() => {
           if (step < total - 1) setPhase('show_answers', step + 1, { step_data: { revealed: false } })
-          else setPhase('scoreboard', 0, { show_scoreboard: true })
+          else setPhase('scoreboard', 0, { show_scoreboard: true, completed_rounds: Array.from(new Set([...(gameState.completed_rounds || []), config.number])) })
         }} nextLabel="ДАЛЬШЕ →" />
       </Slide>
     )
@@ -384,7 +384,10 @@ export function ShowAnswers({ gameState, config, isAdminView = false, answers = 
 
           {revealed && (
             <div className="reveal-up hud-frame" style={{
-              flexShrink: 0, padding: '18px 26px',
+              flexShrink: 0,
+              flex: q.match_pairs ? 1 : undefined,
+              justifyContent: q.match_pairs ? 'center' : undefined,
+              padding: '18px 26px',
               background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.35)',
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
             }}>
@@ -411,7 +414,9 @@ export function ShowAnswers({ gameState, config, isAdminView = false, answers = 
           )}
         </div>
 
-        {showTeamColumn && (
+        {/* Ответы команд появляются ТОЛЬКО вместе с правильным ответом —
+            иначе крупные ответы на проекторе спойлерят раньше времени */}
+        {showTeamColumn && revealed && (
           <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div className="mono-tag" style={{ fontSize: 15 }}>ОТВЕТЫ КОМАНД</div>
             {teamAnswers.length === 0 && <div style={{ color: '#444', fontSize: 18 }}>нет ответов</div>}
@@ -469,9 +474,9 @@ export function ShowAnswers({ gameState, config, isAdminView = false, answers = 
             if (step < total - 1) setPhase('show_answers', step + 1, { step_data: { revealed: false } })
             else if (!hasNextRound(config.number)) {
               // Последний раунд игры: промежуточное табло не нужно — сразу финальные итоги
-              updateGameState({ status: 'finale', current_round: 0, current_step: 0, show_scoreboard: false, step_data: {} })
+              updateGameState({ status: 'finale', current_round: 0, current_step: 0, show_scoreboard: false, step_data: {}, completed_rounds: Array.from(new Set([...(gameState.completed_rounds || []), config.number])) })
             }
-            else setPhase('scoreboard', 0, { show_scoreboard: true })
+            else setPhase('scoreboard', 0, { show_scoreboard: true, completed_rounds: Array.from(new Set([...(gameState.completed_rounds || []), config.number])) })
           }}>
             {step < total - 1 ? 'СЛЕДУЮЩИЙ ВОПРОС →' : hasNextRound(config.number) ? 'К ТАБЛО →' : 'ФИНАЛЬНЫЕ ИТОГИ →'}
           </button>
@@ -558,15 +563,17 @@ function MatchAnswerGrid({ images, pairs, stepKey }) {
     return pair ? pair.slice(1) : '?'
   }
 
+  // Размеры от ширины экрана: 4 картинки занимают почти всю ширину проектора
+  const cardW = `clamp(240px, ${Math.floor(84 / Math.max(images.length, 1))}vw, 460px)`
   return (
-    <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', justifyContent: 'center' }}>
+    <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', justifyContent: 'center', alignItems: 'flex-start' }}>
       {images.map((url, i) => (
-        <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, width: 220 }}>
-          <img src={mediaSrc(url)} alt={`img-${i + 1}`} style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 6, border: '1px solid #222' }} />
+        <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, width: cardW }}>
+          <img src={mediaSrc(url)} alt={`img-${i + 1}`} style={{ width: '100%', aspectRatio: '4 / 3', objectFit: 'cover', borderRadius: 6, border: '1px solid #222' }} />
           {i < count && (
             <div className="reveal-up" style={{
-              fontFamily: 'Orbitron, monospace', fontSize: 42, fontWeight: 700,
-              color: '#22c55e', textShadow: '0 0 18px rgba(34,197,94,0.45)',
+              fontFamily: 'Orbitron, monospace', fontSize: 'clamp(40px, 4.5vw, 68px)', fontWeight: 700,
+              color: '#22c55e', textShadow: '0 0 22px rgba(34,197,94,0.5)',
             }}>{answerFor(i + 1)}</div>
           )}
         </div>

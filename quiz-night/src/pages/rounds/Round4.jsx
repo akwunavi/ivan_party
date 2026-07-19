@@ -53,6 +53,7 @@ export const ROUND4 = {
   ],
 }
 
+
 export default function Round4({ gameState }) {
   const { status, step_data = {} } = gameState
   const opened = step_data.opened || []
@@ -144,7 +145,7 @@ export default function Round4({ gameState }) {
         ))}
       </div>
 
-      <NavButtons onNext={() => setPhase('scoreboard', 0, { show_scoreboard: true })} nextLabel="ЗАВЕРШИТЬ РАУНД →" />
+      <NavButtons onNext={() => setPhase('scoreboard', 0, { show_scoreboard: true, completed_rounds: Array.from(new Set([...(gameState.completed_rounds || []), 4])) })} nextLabel="ЗАВЕРШИТЬ РАУНД →" />
 
       {/* Модалка активной плитки */}
       {active && <TileModal active={active} onClose={closeTile} />}
