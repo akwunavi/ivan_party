@@ -21,7 +21,7 @@ questions: [
     {
       content_type: 'text',
       question_text: 'В этом фильме 2009 года время на разных уровнях повествования течет с разной скоростью. Эту идею авторы подчеркнули не только монтажом, но и музыкой: знаменитая оркестровая тема была построена таким образом, чтобы отражать сильно замедленное звучание композиции, которая неоднократно появляется в самом сюжете. Назовите фильм.',
-      media_urls: [],
+      answer_media_urls: ['media/ans_r1_1.jpg'],
       voice_audio: '/media/voices/1_1.mp3',
       choices: null,
       correct_answer: 'Начало',
@@ -34,6 +34,7 @@ questions: [
 '/media/r1.1_3.jpg',
 '/media/r1.1_4.jpg'],
  voice_audio: '/media/voices/1_2.mp3',
+ answer_media_urls: ['media/ans_r1_2.jpg'],
       correct_answer: 'Джентельмены',
     },
     {

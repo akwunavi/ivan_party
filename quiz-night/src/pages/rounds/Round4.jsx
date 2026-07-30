@@ -22,7 +22,7 @@ export const ROUND4 = {
     'Баллы заберет игрок команды, отправивший правильный ответ первым',
   ],
    themes: [
-    { name: 'РУССКИЙ РОК', hint: 'только русский рок', tiles: [
+    { name: 'РУССКОЕ', hint: 'песни на русском', tiles: [
       { value: 0.5, audio: '/media/song_1_1.mp3', correct_answer: '—' },
       { value: 1,   audio: '/media/song_1_2.mp3', correct_answer: '—' },
       { value: 1.5, audio: '/media/song_1_3.mp3', correct_answer: '—' },
