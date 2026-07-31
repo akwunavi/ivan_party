@@ -61,7 +61,10 @@ export default function MediaDisplay({ question, showText = true, typewriter = f
       {/* КАРТИНКИ — сетка занимает всё оставшееся место, никогда не вылезает */}
       {hasImages && (
         <div style={{ flex: 1, minHeight: 0, width: '100%' }}>
-          <ImageGrid urls={media_urls} fit={question.image_fit || (media_urls.length === 2 ? 'cover' : 'contain')} />
+          <ImageGrid urls={media_urls}
+            labels={question.choices?.length === media_urls.length
+              ? question.choices.map(c => c.key) : null}
+            fit={question.image_fit || (media_urls.length === 2 ? 'cover' : 'contain')} />
         </div>
       )}
 
@@ -111,7 +114,7 @@ export default function MediaDisplay({ question, showText = true, typewriter = f
 
 // Автосетка картинок: вся сетка занимает фикс. высоту, делится на ряды —
 // при любом количестве картинок ВСЕ видны на экране без прокрутки.
-function ImageGrid({ urls, fit = 'contain' }) {
+function ImageGrid({ urls, fit = 'contain', labels = null }) {
   const count = urls.length
 
   // До 5 картинок — в ОДИН ряд; дальше — сетка
@@ -160,7 +163,7 @@ function ImageGrid({ urls, fit = 'contain' }) {
               fontSize: 20, padding: '4px 12px',
               borderLeft: '3px solid #ea580c'
             }}>
-              {i + 1}
+              {labels ? labels[i] : i + 1}
             </div>
           )}
         </div>

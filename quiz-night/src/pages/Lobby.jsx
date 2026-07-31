@@ -39,7 +39,7 @@ export default function Lobby({ gameState }) {
         </div>
         <div className="glitch-title" style={{
           fontFamily: 'Russo One, Rajdhani, sans-serif',
-          fontSize: compact ? 'clamp(44px, 7vw, 96px)' : 'clamp(120px, 20vw, 300px)',
+          fontSize: compact ? 'clamp(80px, 12vw, 190px)' : 'clamp(120px, 20vw, 300px)',
           fontWeight: 700, lineHeight: 0.92,
           letterSpacing: '-0.02em', color: '#fff',
         }}>
@@ -54,13 +54,13 @@ export default function Lobby({ gameState }) {
       {/* ═══ ОСНОВНАЯ ЗОНА: три колонки по горизонтали ═══ */}
       <div style={{
         display: 'flex', gap: 28, alignItems: 'stretch', justifyContent: 'center',
-        width: '100%', flex: 1, minHeight: 0, flexWrap: compact ? 'nowrap' : 'wrap',
+        width: '100%', flex: 1, minHeight: 0, alignItems: 'center', flexWrap: compact ? 'nowrap' : 'wrap',
       }}>
 
         {/* 1. QR — слева */}
         <div style={{
           background: '#0d0d0d', border: '1px solid #333', borderLeft: '3px solid #ea580c',
-          padding: compact ? '16px 20px' : '20px 28px',
+          padding: compact ? '24px 28px' : '20px 28px',
           display: 'flex', flexDirection: compact ? 'column' : 'row',
           alignItems: 'center', justifyContent: 'center', gap: compact ? 12 : 20, flexShrink: 0,
           clipPath: 'polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px))',
@@ -69,10 +69,10 @@ export default function Lobby({ gameState }) {
             background: '#fff', padding: 8, borderRadius: 4,
             boxShadow: pulse ? '0 0 20px rgba(234,88,12,0.6)' : 'none', transition: 'box-shadow 0.3s',
           }}>
-            <QRCodeSVG value={PLAYER_URL} size={compact ? 120 : 140} />
+            <QRCodeSVG value={PLAYER_URL} size={compact ? 190 : 140} />
           </div>
           <div style={{ textAlign: compact ? 'center' : 'left' }}>
-            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: compact ? 18 : 24, fontWeight: 700, color: '#fff', marginBottom: 4 }}>
+            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: compact ? 26 : 24, fontWeight: 700, color: '#fff', marginBottom: 6 }}>
               ПОДКЛЮЧАЙСЯ<br />К ИГРЕ
             </div>
             <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: '#555', letterSpacing: '0.1em' }}>
@@ -84,30 +84,30 @@ export default function Lobby({ gameState }) {
         {/* 2. Составы команд — центр, растут вширь, а не вниз */}
         {groups && (
           <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div className="mono-tag" style={{ fontSize: 13, flexShrink: 0 }}>
+            <div className="mono-tag" style={{ fontSize: 16, flexShrink: 0 }}>
               🎲 РАСПРЕДЕЛЕНИЕ — КАПИТАН РЕГИСТРИРУЕТ КОМАНДУ САМ
             </div>
             <div style={{
               flex: 1, minHeight: 0,
               display: 'grid',
               gridTemplateColumns: `repeat(${groups.length <= 2 ? groups.length : groups.length <= 4 ? 2 : 3}, 1fr)`,
-              gap: 10, alignContent: 'start',
+              gap: 14, alignContent: 'stretch',
             }}>
               {groups.map((group, i) => (
                 <div key={i} style={{
-                  padding: '10px 14px', minWidth: 0,
+                  padding: '18px 22px', minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center',
                   border: `2px solid ${TEAM_COLORS[i % TEAM_COLORS.length]}`,
                   borderLeft: `5px solid ${TEAM_COLORS[i % TEAM_COLORS.length]}`,
                   background: `${TEAM_COLORS[i % TEAM_COLORS.length]}12`,
                 }}>
                   <div style={{
-                    fontFamily: 'Russo One, Rajdhani, sans-serif', fontSize: 15,
-                    color: TEAM_COLORS[i % TEAM_COLORS.length], marginBottom: 4,
+                    fontFamily: 'Russo One, Rajdhani, sans-serif', fontSize: 24,
+                    color: TEAM_COLORS[i % TEAM_COLORS.length], marginBottom: 8,
                   }}>
                     КОМАНДА {i + 1}
                   </div>
                   <div style={{
-                    fontFamily: 'Rajdhani, sans-serif', fontSize: 17, color: '#eee', lineHeight: 1.35,
+                    fontFamily: 'Rajdhani, sans-serif', fontSize: 26, color: '#eee', lineHeight: 1.4, fontWeight: 600,
                     overflowWrap: 'anywhere',
                   }}>
                     {group.join(', ')}
@@ -121,20 +121,20 @@ export default function Lobby({ gameState }) {
         {/* 3. Подключившиеся — справа, в 2 колонки */}
         {teams.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flexShrink: 0, maxWidth: compact ? '30vw' : undefined }}>
-            <div className="mono-tag" style={{ fontSize: 13 }}>ПОДКЛЮЧИЛИСЬ ({teams.length})</div>
+            <div className="mono-tag" style={{ fontSize: 16 }}>ПОДКЛЮЧИЛИСЬ ({teams.length})</div>
             <div style={{
               display: 'grid',
               gridTemplateColumns: compact && teams.length > 3 ? '1fr 1fr' : '1fr',
-              gap: 8, alignContent: 'start',
+              gap: 10, alignContent: 'start',
             }}>
               {teams.map((team, i) => (
                 <div key={team.id} className="team-chip-fx" style={{
-                  padding: compact ? '9px 16px' : '14px 26px',
+                  padding: compact ? '14px 22px' : '14px 26px',
                   border: `2px solid ${team.color || TEAM_COLORS[i % TEAM_COLORS.length]}`,
                   borderLeft: `5px solid ${team.color || TEAM_COLORS[i % TEAM_COLORS.length]}`,
                   background: `${team.color || TEAM_COLORS[i % TEAM_COLORS.length]}18`,
                   fontFamily: 'Russo One, Rajdhani, sans-serif',
-                  fontSize: compact ? 17 : 24, color: '#fff',
+                  fontSize: compact ? 22 : 24, color: '#fff',
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                   clipPath: 'polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%)',
                 }}>
@@ -156,7 +156,7 @@ export default function Lobby({ gameState }) {
 
       {/* Старт игры: одна кнопка, всегда начинает с разогрева (Раунд 0) */}
       {teams.length > 0 && (
-        <button className="btn btn-primary" style={{ fontSize: compact ? 20 : 26, padding: compact ? '12px 36px' : '18px 48px', flexShrink: 0 }}
+        <button className="btn btn-primary" style={{ fontSize: compact ? 26 : 26, padding: compact ? '18px 48px' : '18px 48px', flexShrink: 0 }}
           onClick={() => updateGameState({
             current_round: 0, current_step: 0, status: 'round_intro',
             accepting_answers: false, show_scoreboard: false, step_data: {}, completed_rounds: [],

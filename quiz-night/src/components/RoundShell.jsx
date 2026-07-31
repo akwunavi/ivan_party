@@ -174,7 +174,7 @@ export default function RoundShell({ gameState, config, renderQuestion }) {
                 autoplayAudio={!(q?.voice_audio || q?.tts_text) || avReady} />}
         </div>
 
-        {q?.choices && <ChoicesGrid choices={q.choices} />}
+        {q?.choices && q.choices.some(c => c.text?.trim()) && <ChoicesGrid choices={q.choices} />}
 
         {!isRepeat && timerActive && (
           <div style={{ maxWidth: 600, width: '100%', margin: '0 auto', flexShrink: 0 }}>
@@ -411,6 +411,8 @@ export function ShowAnswers({ gameState, config, isAdminView = false, answers = 
                 <MatchAnswerGrid images={q.media_urls} pairs={q.correct_pairs || []} stepKey={step} />
               ) : q.order_answer && Array.isArray(q.correct_answer) ? (
                 <StaggeredList lines={q.correct_answer} stepKey={step} />
+              ) : q.choices && !q.choices.some(c => c.text?.trim()) && q.media_urls?.length ? (
+                <ImageChoiceAnswer images={q.media_urls} choices={q.choices} correctKey={q.correct_choice} />
               ) : q.choices ? (
                 <StaggeredChoices choices={q.choices} correctKey={q.correct_choice} stepKey={step} />
               ) : Array.isArray(q.correct_answer) ? (
@@ -601,6 +603,38 @@ function MatchAnswerGrid({ images, pairs, stepKey }) {
           )}
         </div>
       ))}
+    </div>
+  )
+}
+
+// Ответ для вопросов «выбери картинку» (флаги и т.п.): показываем все фото
+// с их буквами, верную подсвечиваем, остальные приглушаем.
+function ImageChoiceAnswer({ images, choices, correctKey }) {
+  const cardW = `clamp(200px, ${Math.floor(84 / Math.max(images.length, 1))}vw, 420px)`
+  return (
+    <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', justifyContent: 'center' }}>
+      {images.map((url, i) => {
+        const key = choices[i]?.key
+        const isCorrect = key === correctKey
+        return (
+          <div key={i} style={{
+            width: cardW, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
+            opacity: isCorrect ? 1 : 0.4, transition: 'opacity 0.4s',
+          }}>
+            <img src={mediaSrc(url)} alt={key} style={{
+              width: '100%', aspectRatio: '4 / 3', objectFit: 'cover', borderRadius: 6,
+              border: `3px solid ${isCorrect ? '#22c55e' : '#222'}`,
+              boxShadow: isCorrect ? '0 0 26px rgba(34,197,94,0.4)' : 'none',
+            }} />
+            <div className={isCorrect ? 'correct-pulse' : ''} style={{
+              fontFamily: 'Orbitron, monospace', fontSize: 'clamp(30px, 3.4vw, 52px)', fontWeight: 700,
+              color: isCorrect ? '#22c55e' : '#555',
+            }}>
+              {key}{isCorrect && ' ✓'}
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }
