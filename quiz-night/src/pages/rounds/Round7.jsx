@@ -32,31 +32,31 @@ export const ROUND7 = {
       media_urls: [], correct_answer: 'Панда' },
 
     { content_type: 'text', question_text: 'А кто это такой повзрослевший?', media_urls: ['/media/r7_4.jpg'], answer_media_urls: ['/media/ans_r7_4.jpg'], 
-      voice_audio: '/media/voices/7_1.mp3',
+      voice_audio: '/media/voices/7_4.mp3',
       correct_answer: 'Skrillex' },
 
     { content_type: 'text', question_text: 'В некоторых знаковых системах существуют парные конструкции, которые только ограничивают содержимое, но сами не несут основной информации. Одно популярное блюдо устроено по очень похожему принципу: его содержимое может меняться почти бесконечно, а две внешние части остаются практически неизменными. Назовите это блюдо.', 
-      voice_audio: '/media/voices/7_1.mp3',
+      voice_audio: '/media/voices/7_5.mp3',
       media_urls: [], correct_answer: 'Сэндвич / бутерброд' },
 
     { content_type: 'text', question_text: 'Что согласно некоторой шуточной песенке можно приготовить из этих ингридиентов? ЗЫ: ингридиентов больше, привидены лишь 4 из 7', 
       media_urls: ['/media/r7_6_1.jpg', '/media/r7_6_2.jpg', '/media/r7_6_3.jpg', 'media/r7_6_4.jpg'], 
-      voice_audio: '/media/voices/7_1.mp3',
+      voice_audio: '/media/voices/7_6.mp3',
       answer_media_urls: ['media/ans_r7_6.jpg'], correct_answer: 'Плов' },
 
     { content_type: 'text', question_text: 'В XVI веке реформаторы сознательно выбрали именно этот месяц для одной из самых известных календарных реформ. Причина была неожиданно прозаичной: так изменения меньше вмешивались в сложившийся церковный календарь. А в каком месяце не досчитались 10 дней?', 
-      voice_audio: '/media/voices/7_1.mp3',
+      voice_audio: '/media/voices/7_7.mp3',
       media_urls: [], correct_answer: 'Октябрь' },
 
     { content_type: 'text', question_text: 'В русском языке название этого животного появилось не потому, что оно белое, и даже не потому, что зимой некоторые особи действительно светлеют. По одной из наиболее распространённых версий, происхождение слова связано с деньгами. Назовите животное.', 
-      voice_audio: '/media/voices/7_1.mp3',
+      voice_audio: '/media/voices/7_8.mp3',
       media_urls: [], correct_answer: 'Белка' },
 
     { content_type: 'audio', question_text: 'В современной культуре это слово встречается гораздо чаще, чем в научной литературе. Его можно встретить в музыке, интернет-мемах и многочисленных теориях заговора. Любопытно, что в основе самого слова лежит вполне реальный биологический термин. Пока думаете, трек может навести на нужную мысль. Назовите это слово?', 
-      voice_audio: '',  media_urls: ['/media/song_r7_9.mp3'], correct_answer: 'Рептилоид' },
+      voice_audio: '/media/voices/7_9.mp3',  media_urls: ['/media/song_r7_9.mp3'], correct_answer: 'Рептилоид' },
 
     { content_type: 'text', question_text: 'Есть вещи, наступления которых люди ждут особенно сильно. Будем надеяться, что и в ближайшее время всё сложится именно так. Назовите второе слово пары, первое из которой уже не раз встречалось вам по ходу игры.', 
-      voice_audio: '/media/voices/7_1.mp3',
+      voice_audio: '/media/voices/7_10.mp3',
       media_urls: [], correct_answer: 'Конец' },
    // ...добавляй до 10
   ],

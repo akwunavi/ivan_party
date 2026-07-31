@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useGameState } from '../hooks/useGameState'
 import { registerTeam } from '../lib/gameActions'
 import { useTeams } from '../hooks/useTeams'
+import { clearGrading } from '../lib/gameActions'
 import { ROUND_CONFIGS } from '../lib/roundsRegistry'
 import { useAnswerQueue } from '../lib/answerQueue'
 
@@ -34,7 +35,7 @@ export default function PlayerPage() {
 
   if (status === 'lobby') return <Waiting team={team} message="ОЖИДАЕМ НАЧАЛА ИГРЫ" />
   if (status === 'scoreboard') return <Waiting team={team} message="ПОДВОДИМ ИТОГИ..." />
-  if (status === 'finale') return <Waiting team={team} message="ИГРА ЗАВЕРШЕНА" sub="Спасибо за игру! 🎉" />
+  if (status === 'finale') return <Waiting team={team} message="ИГРА ЗАВЕРШЕНА" sub="Спасибо за игру! Смотри на проектор 🎉" />
   if (status === 'break') return <Waiting team={team} message="ПЕРЕРЫВ 10 МИНУТ" sub="Разомнись, налей выпить :)" />
   if (status === 'round_intro' || status === 'rules') return <Waiting team={team} message={`РАУНД ${current_round}`} sub="Слушай правила" />
   if (status === 'show_answers') return <PlayerReview team={team} gameState={gameState} />
@@ -64,6 +65,7 @@ function JeopardyForm({ team, gameState }) {
 
   function submit() {
     if (!text.trim() || sends >= 2) return
+    clearGrading(team.id, `r4-q${t}-${i}`, 4).catch(() => {})
     queueSend({
       team_id: team.id,
       game_id: gameState.game_id,
@@ -154,6 +156,9 @@ function AnswerForm({ team, gameState }) {
   }
 
   async function push(qIdx, answer, stake) {
+    // П.5: ответ изменился → снимаем прежнюю оценку ведущего и откатываем
+    // начисленные за неё баллы (иначе останется чужая галочка и старые очки).
+    clearGrading(team.id, `r${round}-q${qIdx}`, round).catch(() => {})
     // Отправка через очередь: если сеть моргнёт, запись не потеряется —
     // останется в localStorage и дошлётся автоматически при восстановлении.
     send({
@@ -389,7 +394,7 @@ function AnswerForm({ team, gameState }) {
                         onChange={e => e.target.checked ? setStake(i, 2) : clearStake(i)}
                         style={{ width: 22, height: 22, accentColor: '#ea580c' }} />
                       <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 17, fontWeight: 700, color: state.stakes[i] === 2 ? '#ea580c' : '#888' }}>
-                        СТАВКА ×2 {state.stakes[i] === 2 ? '·' : ''}
+                        СТАВКА ×2 {state.stakes[i] === 2 ? '· ПОСТАВЛЕНА' : ''}
                       </span>
                     </label>
                   )}

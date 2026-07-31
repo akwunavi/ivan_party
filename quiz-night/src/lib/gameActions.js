@@ -50,6 +50,27 @@ export async function doubleRoundScore(teamId, roundNumber) {
   if (error) throw error
 }
 
+// Игрок изменил ответ после проверки → снимаем оценку и откатываем баллы,
+// иначе на экране остаётся старая галочка, а в сумме — старые баллы.
+export async function clearGrading(teamId, questionRef, roundNumber) {
+  const { data: row } = await supabase
+    .from('answers')
+    .select('id, points_awarded, is_correct')
+    .eq('team_id', teamId).eq('question_ref', questionRef)
+    .maybeSingle()
+  if (!row || row.is_correct == null) return
+  const prev = Number(row.points_awarded ?? 0)
+  if (prev !== 0) {
+    await supabase.from('score_log').insert({
+      team_id: teamId, round_number: roundNumber,
+      question_ref: questionRef, delta: -prev, reason: 'answer_changed_revert',
+    })
+  }
+  await supabase.from('answers')
+    .update({ is_correct: null, points_awarded: 0 })
+    .eq('id', row.id)
+}
+
 // Отметить ответ верным/неверным
 export async function markAnswer(answerId, isCorrect, pointsAwarded) {
   const { error } = await supabase

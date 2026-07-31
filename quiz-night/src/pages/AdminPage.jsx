@@ -549,7 +549,7 @@ function R4AdminAnswers({ gameState, config, answers, onGrade }) {
 
   const tileAnswers = answers
     .filter(a => a.question_ref === `r4-q${t}-${i}`)
-    .sort((x, y) => new Date(x.updated_at) - new Date(y.updated_at))
+    .sort((x, y) => new Date(x.created_at || x.updated_at) - new Date(y.created_at || y.updated_at))
 
   return (
     <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>

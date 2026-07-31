@@ -51,7 +51,13 @@ export default function RoundShell({ gameState, config, renderQuestion }) {
     // если его прервали сменой шага — тогда трек молчал весь вопрос.
     const tryPlay = (attempt = 0) => {
       audio.play().catch(() => {
-        if (!cancelled && attempt < 3) setTimeout(() => tryPlay(attempt + 1), 350)
+        if (cancelled) return
+        if (attempt < 5) { setTimeout(() => tryPlay(attempt + 1), 400); return }
+        // Последний рубеж: браузер требует жеста пользователя — стартуем
+        // по первому клику/нажатию на странице (ведущий всё равно кликает).
+        const kick = () => { if (!cancelled) audio.play().catch(() => {}) }
+        window.addEventListener('click', kick, { once: true })
+        window.addEventListener('keydown', kick, { once: true })
       })
     }
     tryPlay()
@@ -578,8 +584,11 @@ function StaggeredChoices({ choices, correctKey, stepKey }) {
 // Ответ для сопоставления с картинками: под каждым фото постепенно
 // (по одной, каждые 3 сек) появляется правильная буква.
 function MatchAnswerGrid({ images: rawImages, pairs, stepKey }) {
-  const images = (rawImages || []).flatMap(u =>
-    typeof u === 'string' && u.includes(',') ? u.split(',').map(s => s.trim()).filter(Boolean) : [u])
+  // useMemo обязателен: без него массив пересоздаётся каждый рендер и
+  // сбрасывает таймер раскрытия букв (буквы не появлялись вообще).
+  const images = useMemo(() => (rawImages || []).flatMap(u =>
+    typeof u === 'string' && u.includes(',') ? u.split(',').map(s => s.trim()).filter(Boolean) : [u]),
+    [JSON.stringify(rawImages)])
   const [count, setCount] = useState(0)
   useEffect(() => {
     setCount(0)
@@ -591,7 +600,7 @@ function MatchAnswerGrid({ images: rawImages, pairs, stepKey }) {
       })
     }, 3000)
     return () => clearInterval(interval)
-  }, [images, stepKey])
+  }, [images.length, stepKey])
 
   const answerFor = (num) => {
     const pair = pairs.find(p => p[0] === String(num))
@@ -620,8 +629,9 @@ function MatchAnswerGrid({ images: rawImages, pairs, stepKey }) {
 // Ответ для вопросов «выбери картинку» (флаги и т.п.): показываем все фото
 // с их буквами, верную подсвечиваем, остальные приглушаем.
 function ImageChoiceAnswer({ images: rawImages, choices, correctKey }) {
-  const images = (rawImages || []).flatMap(u =>
-    typeof u === 'string' && u.includes(',') ? u.split(',').map(s => s.trim()).filter(Boolean) : [u])
+  const images = useMemo(() => (rawImages || []).flatMap(u =>
+    typeof u === 'string' && u.includes(',') ? u.split(',').map(s => s.trim()).filter(Boolean) : [u]),
+    [JSON.stringify(rawImages)])
   const cardW = `clamp(200px, ${Math.floor(84 / Math.max(images.length, 1))}vw, 420px)`
   return (
     <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -764,7 +774,7 @@ function AnswerTimeSlide({ config, onBack, onNext, onRefetch, answers = [], roun
     <Slide>
       <div className="mono-tag" style={{ fontSize: 16 }}>РАУНД {pad(config.number)} :: ВРЕМЯ ОТВЕТОВ</div>
       <h1 className="neon-title" style={{ ...S.title, color: '#22c55e', textShadow: '0 0 30px rgba(34,197,94,0.4)' }}>ОТВЕЧАЙТЕ!</h1>
-      <div style={{ ...S.meta, fontSize: 15 }}>ЖДУ КОГДА УЖЕ ПРИШЛЕТЕ</div>
+      <div style={{ ...S.meta, fontSize: 15 }}>КАПИТАНЫ ОТПРАВЛЯЮТ ОТВЕТЫ С ТЕЛЕФОНОВ</div>
       <div style={{ maxWidth: 600, width: '100%' }}>
         <Timer seconds={seconds} autoStart />
       </div>
