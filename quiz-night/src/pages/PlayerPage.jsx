@@ -34,7 +34,7 @@ export default function PlayerPage() {
 
   if (status === 'lobby') return <Waiting team={team} message="ОЖИДАЕМ НАЧАЛА ИГРЫ" />
   if (status === 'scoreboard') return <Waiting team={team} message="ПОДВОДИМ ИТОГИ..." />
-  if (status === 'finale') return <Waiting team={team} message="ИГРА ЗАВЕРШЕНА" sub="Спасибо за игру! Смотри на проектор 🎉" />
+  if (status === 'finale') return <Waiting team={team} message="ИГРА ЗАВЕРШЕНА" sub="Спасибо за игру! 🎉" />
   if (status === 'break') return <Waiting team={team} message="ПЕРЕРЫВ 10 МИНУТ" sub="Разомнись, налей выпить :)" />
   if (status === 'round_intro' || status === 'rules') return <Waiting team={team} message={`РАУНД ${current_round}`} sub="Слушай правила" />
   if (status === 'show_answers') return <PlayerReview team={team} gameState={gameState} />
@@ -194,11 +194,25 @@ function AnswerForm({ team, gameState }) {
   }
 
   // Буквенные варианты (Р3/Р5): выбор шлётся сразу, смена буквы = исправление
+  // Ответ считается ЗАВЕРШЁННЫМ, только когда собран целиком:
+  // порядок — все буквы расставлены, сопоставление — все пары заданы.
+  function isComplete(q, value) {
+    if (!value) return false
+    if (q.order_answer) return value.length >= (q.choices?.length ?? 0)
+    if (q.match_pairs) return value.split(',').filter(Boolean).length >= (q.match_pairs.left?.length ?? 0)
+    return true  // обычный выбор буквы — завершён сразу
+  }
+
   function setAnswer(qIdx, text) {
+    const q = questions[qIdx]
     setState(s => {
       const had = s.answers[qIdx]
       const edits = { ...s.edits }
-      if (collapsible && had != null && had !== text) edits[qIdx] = (edits[qIdx] ?? 0) + 1
+      // Считаем исправление ТОЛЬКО при смене уже готового ответа.
+      // Промежуточные тапы при сборке (1-й, 2-й, 3-й элемент) лимит не тратят.
+      if (collapsible && had != null && had !== text && isComplete(q, had)) {
+        edits[qIdx] = (edits[qIdx] ?? 0) + 1
+      }
       return { ...s, answers: { ...s.answers, [qIdx]: text }, edits }
     })
     push(qIdx, text, state.stakes[qIdx] ?? null)
@@ -267,18 +281,18 @@ function AnswerForm({ team, gameState }) {
                 {collapsible && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
                     {state.answers[i] && (
-                      <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 17, fontWeight: 700, color: '#22c55e', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 180 }}>
+                      <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 17, fontWeight: 700, color: '#22c55e', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0, flex: '0 1 auto' }}>
                         {state.answers[i]}
                         {(() => { const ch = q.choices?.find(c => c.key === state.answers[i]); return ch ? ` — ${ch.text}` : '' })()}
-                        {Number(state.stakes[i]) > 0 && (
-                          <span style={{
-                            marginLeft: 8, padding: '1px 7px', border: '1px solid #ea580c',
-                            color: '#ea580c', fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700,
-                          }}>×{state.stakes[i]}</span>
-                        )}
                       </span>
                     )}
-                    <span style={{ color: '#555', fontSize: 12 }}>{isOpen ? '▲' : '▼'}</span>
+                    {Number(state.stakes[i]) > 0 && (
+                      <span style={{
+                        flexShrink: 0, padding: '2px 8px', border: '1px solid #ea580c',
+                        color: '#ea580c', fontFamily: 'Orbitron, monospace', fontSize: 13, fontWeight: 700,
+                      }}>×{state.stakes[i]}</span>
+                    )}
+                    <span style={{ color: '#555', fontSize: 12, flexShrink: 0 }}>{isOpen ? '▲' : '▼'}</span>
                   </div>
                 )}
               </div>
@@ -291,10 +305,10 @@ function AnswerForm({ team, gameState }) {
                   )}
 
                   {q.match_pairs ? (
-                    <MatchPicker q={q} value={state.answers[i] || ''} locked={isLocked}
+                    <MatchPicker q={q} value={state.answers[i] || ''} locked={isLocked && isComplete(q, state.answers[i])}
                       onChange={text => setAnswer(i, text)} onClear={() => clearAnswer(i)} />
                   ) : q.order_answer && q.choices ? (
-                    <OrderPicker q={q} value={state.answers[i] || ''} locked={isLocked}
+                    <OrderPicker q={q} value={state.answers[i] || ''} locked={isLocked && isComplete(q, state.answers[i])}
                       onChange={text => setAnswer(i, text)} onClear={() => clearAnswer(i)} />
                   ) : hasChoices ? (
                     <>
@@ -375,7 +389,7 @@ function AnswerForm({ team, gameState }) {
                         onChange={e => e.target.checked ? setStake(i, 2) : clearStake(i)}
                         style={{ width: 22, height: 22, accentColor: '#ea580c' }} />
                       <span style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 17, fontWeight: 700, color: state.stakes[i] === 2 ? '#ea580c' : '#888' }}>
-                        СТАВКА ×2 {state.stakes[i] === 2 ? '· ПОСТАВЛЕНА' : ''}
+                        СТАВКА ×2 {state.stakes[i] === 2 ? '·' : ''}
                       </span>
                     </label>
                   )}

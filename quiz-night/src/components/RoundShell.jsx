@@ -46,11 +46,19 @@ export default function RoundShell({ gameState, config, renderQuestion }) {
     audio.loop = true
     audio.volume = 0.6
     musicRef.current = audio
-    audio.play().catch(() => {})
+    let cancelled = false
+    // Повторная попытка: первый play() может быть отклонён браузером,
+    // если его прервали сменой шага — тогда трек молчал весь вопрос.
+    const tryPlay = (attempt = 0) => {
+      audio.play().catch(() => {
+        if (!cancelled && attempt < 3) setTimeout(() => tryPlay(attempt + 1), 350)
+      })
+    }
+    tryPlay()
     // При каждом перелистывании (смене step) старый трек ОБЯЗАТЕЛЬНО глушится
     // здесь, до создания следующего — иначе он продолжает играть в фоне,
     // накладываясь на трек следующего вопроса.
-    return () => audio.pause()
+    return () => { cancelled = true; audio.pause() }
   }, [timerActive, step])
 
   // ── Озвучка + таймер: один раз на каждый (status, step) ──
@@ -569,7 +577,9 @@ function StaggeredChoices({ choices, correctKey, stepKey }) {
 
 // Ответ для сопоставления с картинками: под каждым фото постепенно
 // (по одной, каждые 3 сек) появляется правильная буква.
-function MatchAnswerGrid({ images, pairs, stepKey }) {
+function MatchAnswerGrid({ images: rawImages, pairs, stepKey }) {
+  const images = (rawImages || []).flatMap(u =>
+    typeof u === 'string' && u.includes(',') ? u.split(',').map(s => s.trim()).filter(Boolean) : [u])
   const [count, setCount] = useState(0)
   useEffect(() => {
     setCount(0)
@@ -609,7 +619,9 @@ function MatchAnswerGrid({ images, pairs, stepKey }) {
 
 // Ответ для вопросов «выбери картинку» (флаги и т.п.): показываем все фото
 // с их буквами, верную подсвечиваем, остальные приглушаем.
-function ImageChoiceAnswer({ images, choices, correctKey }) {
+function ImageChoiceAnswer({ images: rawImages, choices, correctKey }) {
+  const images = (rawImages || []).flatMap(u =>
+    typeof u === 'string' && u.includes(',') ? u.split(',').map(s => s.trim()).filter(Boolean) : [u])
   const cardW = `clamp(200px, ${Math.floor(84 / Math.max(images.length, 1))}vw, 420px)`
   return (
     <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -752,7 +764,7 @@ function AnswerTimeSlide({ config, onBack, onNext, onRefetch, answers = [], roun
     <Slide>
       <div className="mono-tag" style={{ fontSize: 16 }}>РАУНД {pad(config.number)} :: ВРЕМЯ ОТВЕТОВ</div>
       <h1 className="neon-title" style={{ ...S.title, color: '#22c55e', textShadow: '0 0 30px rgba(34,197,94,0.4)' }}>ОТВЕЧАЙТЕ!</h1>
-      <div style={{ ...S.meta, fontSize: 15 }}>КАПИТАНЫ ОТПРАВЛЯЮТ ОТВЕТЫ С ТЕЛЕФОНОВ</div>
+      <div style={{ ...S.meta, fontSize: 15 }}>ЖДУ КОГДА УЖЕ ПРИШЛЕТЕ</div>
       <div style={{ maxWidth: 600, width: '100%' }}>
         <Timer seconds={seconds} autoStart />
       </div>

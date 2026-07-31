@@ -6,7 +6,13 @@ import Typewriter from './Typewriter'
 import { mediaSrc } from '../lib/paths'
 
 export default function MediaDisplay({ question, showText = true, typewriter = false, noAV = false, revealMedia = false, autoplayAudio = true }) {
-  const { content_type, question_text, media_urls = [], match_pairs } = question
+  const { content_type, question_text, match_pairs } = question
+  // Страховка от склеенных путей: если внутри строки есть запятая — разбиваем.
+  const media_urls = (question.media_urls || []).flatMap(u =>
+    typeof u === 'string' && u.includes(',')
+      ? u.split(',').map(s => s.trim()).filter(Boolean)
+      : [u]
+  )
   // Картинки рендерим, если они есть — независимо от content_type.
   // Аудио/видео-вопросы исключены: там media_urls — это трек/клип, не фото.
   const hasImages = media_urls.length > 0

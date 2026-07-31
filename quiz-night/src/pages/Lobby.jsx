@@ -85,7 +85,7 @@ export default function Lobby({ gameState }) {
         {groups && (
           <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div className="mono-tag" style={{ fontSize: 16, flexShrink: 0 }}>
-              🎲 РАСПРЕДЕЛЕНИЕ — КАПИТАН РЕГИСТРИРУЕТ КОМАНДУ САМ
+              🎲 РАСПРЕДЕЛЕНИЕ — ВЫБЕРИТЕ КАПИТАНА С ХОРОШИМ VPN И ТЕЛЕФОНОМ, КОТОРЫЙ НЕ СЯДЕТ ЗА 20 МИНУТ
             </div>
             <div style={{
               flex: 1, minHeight: 0,

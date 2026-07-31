@@ -28,42 +28,48 @@ export const ROUND5 = {
       Б - Душанбе
       В - Ташкент
       Г - Ашхабад`, 
-  media_urls: ['/media/ans_r5_1_1.jpg', '/media/ans_r5_1_2.jpg', '/media/ans_r5_1_3.jpg', '/media/ans_r5_1_4.jpg'],
+  media_urls: ['/media/r5_1_1.jpg', '/media/r5_1_2.jpg', '/media/r5_1_3.jpg', '/media/r5_1_4.jpg'],
   match_pairs: {
     left: ['1', '2', '3', '4'],
     right: ['А', 'Б', 'В', 'Г'],
   },
+   voice_audio: '/media/voices/5_1.mp3',
   correct_pairs: ['1А', '2В', '3Г', '4Б'],
 },
 
     { content_type: 'choice', 
       question_text: 'Какой слой атмосферы находится сразу над тропосферой?', 
-      choices: [{ key: 'А', text: 'Экзосфера' }, { key: 'Б', text: 'Термосфера' }, { key: 'В', text: 'Мезосфера' }, { key: 'Г', text: 'Тропосфера' }], 
-      correct_choice: 'Г', correct_answer: 'Г - Тропосфера' },
+      choices: [{ key: 'А', text: 'Экзосфера' }, { key: 'Б', text: 'Термосфера' }, { key: 'В', text: 'Мезосфера' }, { key: 'Г', text: 'Стратосфера' }], 
+      voice_audio: '/media/voices/5_2.mp3',
+      correct_choice: 'Г', correct_answer: 'Г - Стратосфера' },
 
     { content_type: 'choice', question_text: 'Какое государство называют «Страной утренней свежести»?', 
-      choices: [{ key: 'А', text: 'Япония' }, { key: 'Б', text: 'Южная Корея' }, { key: 'В', text: 'Китай' }, { key: 'Г', text: 'Вьетнам' }], 
+      choices: [{ key: 'А', text: 'Япония' }, { key: 'Б', text: 'Южная Корея' }, { key: 'В', text: 'Китай' }, { key: 'Г', text: 'Вьетнам' }],
+       voice_audio: '/media/voices/5_3.mp3', 
       correct_choice: 'Б', 
       correct_answer: 'Южная Корея' },
 
     { content_type: 'text', question_text: 'Расположите эти города в порядке удаленности от экватора, начиная от самого ближнего?', 
       order_answer: true,
       choices: [{ key: 'А', text: 'Бангкок ' }, { key: 'Б', text: 'Куала-Лумпур' }, { key: 'В', text: 'Токио ' }, { key: 'Г', text: 'Сингапур' }], 
+       voice_audio: '/media/voices/5_4.mp3',
       correct_order: 'ГБАВ', 
       correct_answer: ['Г - Сингапур', 'Б - Куала-Лумпур', 'А - Бангкок', 'В - Токио']},
 
     { content_type: 'multi_image', question_text: 'Определите по флагу, какая из этих стран не входит в Евросоюз?', 
-      media_urls: ['/media/ans_r5_5_1.jpg', //А
-      '/media/ans_r5_5_2.jpg', //Б
-      '/media/ans_r5_5_3.jpg', //В
-      '/media/ans_r5_5_4.jpg', //Г
+      media_urls: ['/media/r5_5_1.jpg', //А
+      '/media/r5_5_2.jpg', //Б
+      '/media/r5_5_3.jpg', //В
+      '/media/r5_5_4.jpg', //Г
       ],
+       voice_audio: '/media/voices/5_5.mp3',
       choices: [{ key: 'А', text: ' ' }, { key: 'Б', text: '' }, { key: 'В', text: '' }, { key: 'Г', text: '' }],
       answer_note: 'А - Лихтенштейн, Б - Андорра, В - Ивори Кост, Г - Сан-Марино',
       correct_choice: 'В', correct_answer: 'В - Ивори Кост' },
 
-    { content_type: 'choice', question_text: 'В какой из этих пар неверное утверждение?', 
-      choices: [{ key: 'А', text: 'Монако - самая густонаселенная страна Европы по плотности населения' }, { key: 'Б', text: 'Ангара - одна из двух рек, вытекающие из Байкала' }, { key: 'В', text: 'Еверест - на территории Непала' }, { key: 'Г', text: 'Котловина Мертвого моря - самая низкая точка Азии' }], 
+    { content_type: 'choice', question_text: 'В какой из этих пар ответов приведено неверное утверждение?', 
+      choices: [{ key: 'А', text: 'Монако - самая густонаселенная страна Европы по плотности населения' }, { key: 'Б', text: 'Ангара - одна из двух рек, вытекающие из Байкала' }, { key: 'В', text: 'Еверест - на территории Непала' }, { key: 'Г', text: 'Котловина Мертвого моря - самая низкая точка Азии' }],
+       voice_audio: '/media/voices/5_6.mp3', 
       answer_note: 'Ангара - единственная река, вытекающая из Байкала',
       correct_choice: 'Б', correct_answer: 'Ангара - одна из двух рек, вытекающие из Байкала' },
   ],
