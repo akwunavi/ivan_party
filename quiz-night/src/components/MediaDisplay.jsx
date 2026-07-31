@@ -7,7 +7,10 @@ import { mediaSrc } from '../lib/paths'
 
 export default function MediaDisplay({ question, showText = true, typewriter = false, noAV = false, revealMedia = false, autoplayAudio = true }) {
   const { content_type, question_text, media_urls = [], match_pairs } = question
-  const hasImages = (content_type === 'image' || content_type === 'multi_image') && media_urls.length > 0
+  // Картинки рендерим, если они есть — независимо от content_type.
+  // Аудио/видео-вопросы исключены: там media_urls — это трек/клип, не фото.
+  const hasImages = media_urls.length > 0
+    && content_type !== 'audio' && content_type !== 'video'
 
   // П.3: для вопросов-сопоставлений заголовок и список вариантов "буква — текст"
   // разделяются на две части — заголовок идёт НАД картинками, варианты ПОД ними.
@@ -36,7 +39,9 @@ export default function MediaDisplay({ question, showText = true, typewriter = f
     color: '#fff',
     maxWidth: '86vw',
     letterSpacing: '0.01em',
-    flexShrink: 0,
+    flexShrink: 1,       // П.2: даём тексту сжиматься, а не выпирать на соседние блоки
+    minHeight: 0,
+    overflowY: 'auto',   // если совсем не влез — прокрутка внутри своего блока
     whiteSpace: 'pre-line',   // П.3: \n в тексте = перенос строки (описание фильма и т.п.)
   }
 

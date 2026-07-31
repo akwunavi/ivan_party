@@ -86,7 +86,7 @@ export async function seedRoundAnswers(gameState, config) {
           updated_at: new Date().toISOString(),
         }
         if (uniqueStakes) row.stake = uniqueStakes[qi % uniqueStakes.length]
-        else if (stakesPool) row.stake = pick(stakesPool) // Р7: свободный выбор
+        else if (stakesPool && Math.random() < 0.4) row.stake = pick(stakesPool.filter(v => v > 0)) // Р7: ставят не всегда
         rows.push(row)
       })
     })

@@ -22,134 +22,141 @@ export default function Lobby({ gameState }) {
     return () => clearTimeout(t)
   }, [teams.length])
 
+  // Есть распределение → компактная раскладка в один экран:
+  // слева QR, по центру составы команд, справа подключившиеся в 2 колонки.
+  const compact = Boolean(groups)
+
   return (
-    <div className="grid-bg flex-center flex-col" style={{
-      height: '100vh', display: 'flex',
-      position: 'relative', overflowY: 'auto', overflowX: 'hidden', padding: 40, gap: 28
+    <div className="grid-bg flex-col" style={{
+      height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      position: 'relative', overflow: 'hidden', padding: '24px 40px', gap: compact ? 18 : 28,
     }}>
 
-      {/* Заголовок */}
-      <div style={{ textAlign: 'center' }}>
-        <div className="mono-tag" style={{ marginBottom: 16 }}>
+      {/* Заголовок — в компактном режиме сильно меньше, чтобы освободить экран */}
+      <div style={{ textAlign: 'center', flexShrink: 0 }}>
+        <div className="mono-tag" style={{ marginBottom: compact ? 6 : 16 }}>
           QUIZ_NIGHT :: ЛОББИ
         </div>
         <div className="glitch-title" style={{
-          fontFamily: 'Rajdhani, sans-serif',
-          fontSize: 'clamp(120px, 20vw, 300px)',
           fontFamily: 'Russo One, Rajdhani, sans-serif',
+          fontSize: compact ? 'clamp(44px, 7vw, 96px)' : 'clamp(120px, 20vw, 300px)',
           fontWeight: 700, lineHeight: 0.92,
-          letterSpacing: '-0.02em', color: '#fff'
+          letterSpacing: '-0.02em', color: '#fff',
         }}>
-          QUIZ<br />
-          <span style={{ color: '#ea580c' }}>NIGHT</span>
+          {compact
+            ? <>QUIZ <span style={{ color: '#ea580c' }}>NIGHT</span></>
+            : <>QUIZ<br /><span style={{ color: '#ea580c' }}>NIGHT</span></>}
         </div>
       </div>
 
-      {/* Сканлайн */}
-      <div className="accent-line scan" style={{ width: '80%' }} />
+      <div className="accent-line scan" style={{ width: '80%', flexShrink: 0 }} />
 
-      {/* QR + команды справа */}
-      <div style={{ display: 'flex', gap: 40, alignItems: 'stretch', flexWrap: 'wrap', justifyContent: 'center' }}>
+      {/* ═══ ОСНОВНАЯ ЗОНА: три колонки по горизонтали ═══ */}
       <div style={{
-        background: '#0d0d0d',
-        border: '1px solid #333',
-        borderLeft: '3px solid #ea580c',
-        padding: '20px 28px',
-        display: 'flex', alignItems: 'center', gap: 20,
-        clipPath: 'polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px))'
+        display: 'flex', gap: 28, alignItems: 'stretch', justifyContent: 'center',
+        width: '100%', flex: 1, minHeight: 0, flexWrap: compact ? 'nowrap' : 'wrap',
       }}>
-        {/* QR — крупнее */}
+
+        {/* 1. QR — слева */}
         <div style={{
-          background: '#fff', padding: 8, borderRadius: 4,
-          boxShadow: pulse ? '0 0 20px rgba(234,88,12,0.6)' : 'none',
-          transition: 'box-shadow 0.3s'
+          background: '#0d0d0d', border: '1px solid #333', borderLeft: '3px solid #ea580c',
+          padding: compact ? '16px 20px' : '20px 28px',
+          display: 'flex', flexDirection: compact ? 'column' : 'row',
+          alignItems: 'center', justifyContent: 'center', gap: compact ? 12 : 20, flexShrink: 0,
+          clipPath: 'polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px))',
         }}>
-          <QRCodeSVG value={PLAYER_URL} size={140} />
-        </div>
-
-        {/* Текст — без ссылки */}
-        <div>
           <div style={{
-            fontFamily: 'Rajdhani, sans-serif',
-            fontSize: 24, fontWeight: 700, color: '#fff', marginBottom: 6
+            background: '#fff', padding: 8, borderRadius: 4,
+            boxShadow: pulse ? '0 0 20px rgba(234,88,12,0.6)' : 'none', transition: 'box-shadow 0.3s',
           }}>
-            ПОДКЛЮЧАЙСЯ<br />К ИГРЕ
+            <QRCodeSVG value={PLAYER_URL} size={compact ? 120 : 140} />
           </div>
-          <div style={{
-            fontFamily: 'Share Tech Mono, monospace',
-            fontSize: 11, color: '#555', letterSpacing: '0.1em'
-          }}>
-            ОТСКАНИРУЙ QR
-          </div>
-        </div>
-      </div>
-
-      {/* Команды — справа от QR, с глитч-неоном */}
-      {teams.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, justifyContent: 'center', minWidth: 240 }}>
-          <div className="mono-tag" style={{ fontSize: 14 }}>ПОДКЛЮЧИЛИСЬ ({teams.length})</div>
-          {teams.map((team, i) => (
-            <div key={team.id} className="team-chip-fx" style={{
-              padding: '14px 26px',
-              border: `2px solid ${team.color || TEAM_COLORS[i % 4]}`,
-              borderLeft: `5px solid ${team.color || TEAM_COLORS[i % 4]}`,
-              background: `${team.color || TEAM_COLORS[i % 4]}18`,
-              fontFamily: 'Russo One, Rajdhani, sans-serif',
-              fontSize: 24, color: '#fff',
-              clipPath: 'polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%)',
-            }}>
-              {team.name}
+          <div style={{ textAlign: compact ? 'center' : 'left' }}>
+            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: compact ? 18 : 24, fontWeight: 700, color: '#fff', marginBottom: 4 }}>
+              ПОДКЛЮЧАЙСЯ<br />К ИГРЕ
             </div>
-          ))}
-        </div>
-      )}
-      </div>
-
-      {/* Рандомайзер команд — опубликованное распределение, все видят сами */}
-      {groups && (
-        <div style={{ width: '100%', maxWidth: 1000 }}>
-          <div className="mono-tag" style={{ textAlign: 'center', marginBottom: 14 }}>
-            🎲 РАСПРЕДЕЛЕНИЕ КОМАНД — КАПИТАН РЕГИСТРИРУЕТ КОМАНДУ САМ
+            <div style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: '#555', letterSpacing: '0.1em' }}>
+              ОТСКАНИРУЙ QR
+            </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(groups.length, 4)}, 1fr)`, gap: 16 }}>
-            {groups.map((group, i) => (
-              <div key={i} style={{
-                padding: '16px 20px', border: `2px solid ${TEAM_COLORS[i % TEAM_COLORS.length]}`,
-                borderLeft: `5px solid ${TEAM_COLORS[i % TEAM_COLORS.length]}`,
-                background: `${TEAM_COLORS[i % TEAM_COLORS.length]}12`,
-              }}>
-                <div style={{
-                  fontFamily: 'Russo One, Rajdhani, sans-serif', fontSize: 18,
-                  color: TEAM_COLORS[i % TEAM_COLORS.length], marginBottom: 8,
+        </div>
+
+        {/* 2. Составы команд — центр, растут вширь, а не вниз */}
+        {groups && (
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div className="mono-tag" style={{ fontSize: 13, flexShrink: 0 }}>
+              🎲 РАСПРЕДЕЛЕНИЕ — КАПИТАН РЕГИСТРИРУЕТ КОМАНДУ САМ
+            </div>
+            <div style={{
+              flex: 1, minHeight: 0,
+              display: 'grid',
+              gridTemplateColumns: `repeat(${groups.length <= 2 ? groups.length : groups.length <= 4 ? 2 : 3}, 1fr)`,
+              gap: 10, alignContent: 'start',
+            }}>
+              {groups.map((group, i) => (
+                <div key={i} style={{
+                  padding: '10px 14px', minWidth: 0,
+                  border: `2px solid ${TEAM_COLORS[i % TEAM_COLORS.length]}`,
+                  borderLeft: `5px solid ${TEAM_COLORS[i % TEAM_COLORS.length]}`,
+                  background: `${TEAM_COLORS[i % TEAM_COLORS.length]}12`,
                 }}>
-                  КОМАНДА {i + 1}
+                  <div style={{
+                    fontFamily: 'Russo One, Rajdhani, sans-serif', fontSize: 15,
+                    color: TEAM_COLORS[i % TEAM_COLORS.length], marginBottom: 4,
+                  }}>
+                    КОМАНДА {i + 1}
+                  </div>
+                  <div style={{
+                    fontFamily: 'Rajdhani, sans-serif', fontSize: 17, color: '#eee', lineHeight: 1.35,
+                    overflowWrap: 'anywhere',
+                  }}>
+                    {group.join(', ')}
+                  </div>
                 </div>
-                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 20, color: '#eee', lineHeight: 1.5 }}>
-                  {group.join(', ')}
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-
+        {/* 3. Подключившиеся — справа, в 2 колонки */}
+        {teams.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flexShrink: 0, maxWidth: compact ? '30vw' : undefined }}>
+            <div className="mono-tag" style={{ fontSize: 13 }}>ПОДКЛЮЧИЛИСЬ ({teams.length})</div>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: compact && teams.length > 3 ? '1fr 1fr' : '1fr',
+              gap: 8, alignContent: 'start',
+            }}>
+              {teams.map((team, i) => (
+                <div key={team.id} className="team-chip-fx" style={{
+                  padding: compact ? '9px 16px' : '14px 26px',
+                  border: `2px solid ${team.color || TEAM_COLORS[i % TEAM_COLORS.length]}`,
+                  borderLeft: `5px solid ${team.color || TEAM_COLORS[i % TEAM_COLORS.length]}`,
+                  background: `${team.color || TEAM_COLORS[i % TEAM_COLORS.length]}18`,
+                  fontFamily: 'Russo One, Rajdhani, sans-serif',
+                  fontSize: compact ? 17 : 24, color: '#fff',
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  clipPath: 'polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%)',
+                }}>
+                  {team.name}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       {teams.length === 0 && (
         <div className="glitch-title" style={{
-          fontFamily: 'Share Tech Mono, monospace',
-          fontSize: 13, color: '#555', letterSpacing: '0.1em'
+          fontFamily: 'Share Tech Mono, monospace', fontSize: 13, color: '#555', letterSpacing: '0.1em', flexShrink: 0,
         }}>
           ОЖИДАНИЕ КОМАНД...
         </div>
       )}
 
-      {/* Старт игры прямо с лобби, когда команды на месте.
-          Одна кнопка: игра всегда начинается с разогрева (Раунд 0),
-          после его табло переход ведёт в Раунд 1 автоматически.
-          Пропустить разогрев можно из админки («Сменить раунд» → R1). */}
+      {/* Старт игры: одна кнопка, всегда начинает с разогрева (Раунд 0) */}
       {teams.length > 0 && (
-        <button className="btn btn-primary" style={{ fontSize: 26, padding: '18px 48px' }}
+        <button className="btn btn-primary" style={{ fontSize: compact ? 20 : 26, padding: compact ? '12px 36px' : '18px 48px', flexShrink: 0 }}
           onClick={() => updateGameState({
             current_round: 0, current_step: 0, status: 'round_intro',
             accepting_answers: false, show_scoreboard: false, step_data: {}, completed_rounds: [],
@@ -158,11 +165,10 @@ export default function Lobby({ gameState }) {
         </button>
       )}
 
-      {/* Незаметная ссылка в угол — для тебя, не для гостей */}
       <a href="#/admin" style={{
         position: 'absolute', bottom: 12, right: 16,
         fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#222',
-        textDecoration: 'none', letterSpacing: '0.1em'
+        textDecoration: 'none', letterSpacing: '0.1em',
       }}>
         admin
       </a>

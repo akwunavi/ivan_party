@@ -22,20 +22,50 @@ export const ROUND5 = {
   questions: [
     // Р5 тоже с буквенными вариантами — автопроверка сверяет букву точно
     {
-      content_type: 'choice',
-      question_text: 'Вопрос 1?',
-      choices: [
-        { key: 'А', text: 'Вариант 1' }, { key: 'Б', text: 'Вариант 2' },
-        { key: 'В', text: 'Вариант 3' }, { key: 'Г', text: 'Вариант 4' },
+      content_type: 'multi_image',
+      question_text: `Соотнесите страну по флагу и ее столицу?,
+      А - Бишкек
+      Б - Душанбе
+      В - Ташкент
+      Г - Ашхабад`, 
+  media_urls: ['/media/ans_r5_1_1.jpg', '/media/ans_r5_1_2.jpg', '/media/ans_r5_1_3.jpg', '/media/ans_r5_1_4.jpg'],
+  match_pairs: {
+    left: ['1', '2', '3', '4'],
+    right: ['А', 'Б', 'В', 'Г'],
+  },
+  correct_pairs: ['1А', '2В', '3Г', '4Б'],
+},
+
+    { content_type: 'choice', 
+      question_text: 'Какой слой атмосферы находится сразу над тропосферой?', 
+      choices: [{ key: 'А', text: 'Экзосфера' }, { key: 'Б', text: 'Термосфера' }, { key: 'В', text: 'Мезосфера' }, { key: 'Г', text: 'Тропосфера' }], 
+      correct_choice: 'Г', correct_answer: 'Г - Тропосфера' },
+
+    { content_type: 'choice', question_text: 'Какое государство называют «Страной утренней свежести»?', 
+      choices: [{ key: 'А', text: 'Япония' }, { key: 'Б', text: 'Южная Корея' }, { key: 'В', text: 'Китай' }, { key: 'Г', text: 'Вьетнам' }], 
+      correct_choice: 'Б', 
+      correct_answer: 'Южная Корея' },
+
+    { content_type: 'text', question_text: 'Расположите эти города в порядке удаленности от экватора, начиная от самого ближнего?', 
+      order_answer: true,
+      choices: [{ key: 'А', text: 'Бангкок ' }, { key: 'Б', text: 'Куала-Лумпур' }, { key: 'В', text: 'Токио ' }, { key: 'Г', text: 'Сингапур' }], 
+      correct_order: 'ГБАВ', 
+      correct_answer: ['Г - Сингапур', 'Б - Куала-Лумпур', 'А - Бангкок', 'В - Токио']},
+
+    { content_type: 'multi_image', question_text: 'Определите по флагу, какая из этих стран не входит в Евросоюз?', 
+      media_urls: ['/media/ans_r5_5_1.jpg', //А
+      '/media/ans_r5_5_2.jpg', //Б
+      '/media/ans_r5_5_3.jpg', //В
+      '/media/ans_r5_5_4.jpg', //Г
       ],
-      correct_choice: 'А',
-      correct_answer: 'А — Вариант 1',
-    },
-    { content_type: 'choice', question_text: 'Вопрос 2?', choices: [{ key: 'А', text: '...' }, { key: 'Б', text: '...' }, { key: 'В', text: '...' }, { key: 'Г', text: '...' }], correct_choice: 'А', correct_answer: '—' },
-    { content_type: 'choice', question_text: 'Вопрос 3?', choices: [{ key: 'А', text: '...' }, { key: 'Б', text: '...' }, { key: 'В', text: '...' }, { key: 'Г', text: '...' }], correct_choice: 'А', correct_answer: '—' },
-    { content_type: 'choice', question_text: 'Вопрос 4?', choices: [{ key: 'А', text: '...' }, { key: 'Б', text: '...' }, { key: 'В', text: '...' }, { key: 'Г', text: '...' }], correct_choice: 'А', correct_answer: '—' },
-    { content_type: 'choice', question_text: 'Вопрос 5?', choices: [{ key: 'А', text: '...' }, { key: 'Б', text: '...' }, { key: 'В', text: '...' }, { key: 'Г', text: '...' }], correct_choice: 'А', correct_answer: '—' },
-    { content_type: 'choice', question_text: 'Вопрос 6?', choices: [{ key: 'А', text: '...' }, { key: 'Б', text: '...' }, { key: 'В', text: '...' }, { key: 'Г', text: '...' }], correct_choice: 'А', correct_answer: '—' },
+      choices: [{ key: 'А', text: ' ' }, { key: 'Б', text: '' }, { key: 'В', text: '' }, { key: 'Г', text: '' }],
+      answer_note: 'А - Лихтенштейн, Б - Андорра, В - Ивори Кост, Г - Сан-Марино',
+      correct_choice: 'В', correct_answer: 'В - Ивори Кост' },
+
+    { content_type: 'choice', question_text: 'В какой из этих пар неверное утверждение?', 
+      choices: [{ key: 'А', text: 'Монако - самая густонаселенная страна Европы по плотности населения' }, { key: 'Б', text: 'Ангара - одна из двух рек, вытекающие из Байкала' }, { key: 'В', text: 'Еверест - на территории Непала' }, { key: 'Г', text: 'Котловина Мертвого моря - самая низкая точка Азии' }], 
+      answer_note: 'Ангара - единственная река, вытекающая из Байкала',
+      correct_choice: 'Б', correct_answer: 'Ангара - одна из двух рек, вытекающие из Байкала' },
   ],
 }
 

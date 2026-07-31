@@ -29,6 +29,8 @@ export default function RoundShell({ gameState, config, renderQuestion }) {
   const q = questions[Math.min(step, questions.length - 1)]
   const [ttsRunning, setTtsRunning] = useState(false)
   const [timerActive, setTimerActive] = useState(false)
+  // Трек аудио/видео-вопроса ждёт, пока договорит озвучка (если она задана)
+  const [avReady, setAvReady] = useState(false)
   const spokenKey = useRef(null)
   const musicRef = useRef(null)
 
@@ -57,6 +59,7 @@ export default function RoundShell({ gameState, config, renderQuestion }) {
     if (spokenKey.current === key) return
     spokenKey.current = key
     setTimerActive(false)
+    setAvReady(false)
 
     async function run() {
       if (status !== 'question' && status !== 'repeat') return
@@ -66,8 +69,10 @@ export default function RoundShell({ gameState, config, renderQuestion }) {
         if (status === 'repeat') setTimeout(() => advance(gameState, config), 300)
         return
       }
-      // Вопросы с музыкой/видео — без озвучки и без таймера
-      if (q?.content_type === 'audio' || q?.content_type === 'video') return
+      // Аудио/видео-вопрос БЕЗ озвучки — трек играет сразу, таймер не нужен
+      const isAV = q?.content_type === 'audio' || q?.content_type === 'video'
+      const hasNarration = Boolean(q?.voice_audio || q?.tts_text)
+      if (isAV && !hasNarration) return
 
       // Своя озвучка (voice_audio) — приоритетнее браузерного TTS.
       // Таймер стартует ровно по факту окончания файла (onended), а не по
@@ -88,6 +93,11 @@ export default function RoundShell({ gameState, config, renderQuestion }) {
           await speak(text)
           setTtsRunning(false)
         }
+      }
+      if (isAV) {
+        // Озвучка отзвучала — теперь можно пускать сам трек/клип
+        setAvReady(true)
+        return
       }
       if (status === 'question') {
         setTimerActive(true)
@@ -159,7 +169,9 @@ export default function RoundShell({ gameState, config, renderQuestion }) {
         </div>
 
         <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {renderQuestion ? renderQuestion(q, { isRepeat }) : <MediaDisplay question={q} typewriter={!isRepeat} />}
+          {renderQuestion ? renderQuestion(q, { isRepeat })
+            : <MediaDisplay question={q} typewriter={!isRepeat}
+                autoplayAudio={!(q?.voice_audio || q?.tts_text) || avReady} />}
         </div>
 
         {q?.choices && <ChoicesGrid choices={q.choices} />}
@@ -410,6 +422,10 @@ export function ShowAnswers({ gameState, config, isAdminView = false, answers = 
                   textShadow: '0 0 20px rgba(34,197,94,0.35)',
                 }} />
               )}
+
+              {/* Пояснение к ответу (answer_note) — появляется через 1.5 сек
+                  после самого ответа, чтобы сначала прочитали ответ. */}
+              {q.answer_note && <AnswerNote text={q.answer_note} stepKey={step} />}
             </div>
           )}
         </div>
@@ -433,7 +449,14 @@ export function ShowAnswers({ gameState, config, isAdminView = false, answers = 
                   {q.match_pairs
                     ? (a.answer_text || '').split(',').filter(Boolean).map(p => `${p[0]}→${p.slice(1)}`).join('  ') || '—'
                     : (a.answer_text || '—')}
-                  {a.stake != null && <span style={{ color: 'var(--accent)', fontSize: 18 }}> · ставка {a.stake}</span>}
+                  {Number(a.stake) > 0 && (
+                    <span style={{
+                      marginLeft: 10, padding: '2px 10px',
+                      border: '2px solid var(--accent)', color: 'var(--accent)',
+                      fontFamily: 'Orbitron, monospace', fontSize: 16, fontWeight: 700,
+                      whiteSpace: 'nowrap',
+                    }}>×{a.stake}</span>
+                  )}
                 </div>
                 {isR3 && a.is_correct == null && answers.some(x =>
                   x.team_id === a.team_id &&
@@ -578,6 +601,28 @@ function MatchAnswerGrid({ images, pairs, stepKey }) {
           )}
         </div>
       ))}
+    </div>
+  )
+}
+
+// Пояснение к ответу: спокойный текст под правильным ответом, с задержкой,
+// чтобы не перетягивать внимание с самого ответа.
+function AnswerNote({ text, stepKey }) {
+  const [show, setShow] = useState(false)
+  useEffect(() => {
+    setShow(false)
+    const t = setTimeout(() => setShow(true), 1500)
+    return () => clearTimeout(t)
+  }, [text, stepKey])
+  if (!show) return null
+  return (
+    <div className="reveal-up" style={{
+      marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(34,197,94,0.25)',
+      fontFamily: 'Rajdhani, sans-serif', fontSize: 'clamp(18px, 2.1vw, 30px)',
+      fontWeight: 600, color: '#bbb', lineHeight: 1.4, textAlign: 'center',
+      maxWidth: '70vw', whiteSpace: 'pre-line',
+    }}>
+      {text}
     </div>
   )
 }

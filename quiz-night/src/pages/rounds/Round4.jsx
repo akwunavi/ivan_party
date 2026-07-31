@@ -22,13 +22,13 @@ export const ROUND4 = {
     'Баллы заберет игрок команды, отправивший правильный ответ первым',
   ],
    themes: [
-    { name: 'РУССКОЕ', hint: 'песни на русском', tiles: [
-      { value: 0.5, audio: '/media/song_1_1.mp3', correct_answer: '—' },
-      { value: 1,   audio: '/media/song_1_2.mp3', correct_answer: '—' },
-      { value: 1.5, audio: '/media/song_1_3.mp3', correct_answer: '—' },
-      { value: 2,   audio: '/media/song_1_4.mp3', correct_answer: '—' },
+    { name: 'РУССКИЙ РОК', hint: 'рок на русском', tiles: [
+      { value: 0.5, audio: '/media/song_1_1.mp3', correct_answer: 'Пикник' },
+      { value: 1,   audio: '/media/song_1_2.mp3', correct_answer: 'Кукрыниксы' },
+      { value: 1.5, audio: '/media/song_1_3.mp3', correct_answer: 'Операция пластилин' },
+      { value: 2,   audio: '/media/song_1_4.mp3', correct_answer: 'Нервы' },
     ]},
-    { name: 'ЗАРУБЕЖНЫЙ РОК', hint: 'только зарубежный рок', tiles: [
+    { name: 'ЗАРУБЕЖНЫЙ РОК', hint: 'рок на не нашем', tiles: [
       { value: 0.5, audio: '/media/song_2_1.mp3', correct_answer: 'Red Hot Chili Peppers' },
       { value: 1,   audio: '/media/song_2_2.mp3', correct_answer: 'Marilyn Manson' },
       { value: 1.5, audio: '/media/song_2_3.mp3', correct_answer: 'Green day' },
