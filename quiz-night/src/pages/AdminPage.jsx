@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { pointsLabel } from '../lib/paths'
 import { collectGameStats, sendStatsToTelegram, downloadCsv, telegramConfigured } from '../lib/stats'
@@ -14,6 +14,28 @@ import { advance, goBack, setPhase } from '../lib/roundFlow'
 import { ROUND_CONFIGS, DISABLED_ROUNDS, TOTAL_ROUNDS } from '../lib/roundsRegistry'
 
 const ADMIN_KEY = import.meta.env.VITE_ADMIN_KEY
+
+class ErrorBoundary extends React.Component {
+  constructor(p) { super(p); this.state = { err: null } }
+  static getDerivedStateFromError(err) { return { err } }
+  render() {
+    if (!this.state.err) return this.props.children
+    return (
+      <div style={{ padding: 20, color: '#fff', fontFamily: 'Rajdhani, sans-serif' }}>
+        <div style={{ color: '#ef4444', fontSize: 20, fontWeight: 700, marginBottom: 10 }}>
+          ОШИБКА ЭКРАНА
+        </div>
+        <div style={{ fontSize: 13, color: '#aaa', marginBottom: 14, wordBreak: 'break-word' }}>
+          {String(this.state.err?.message || this.state.err)}
+        </div>
+        <button onClick={() => this.setState({ err: null })}
+          style={{ padding: '12px 20px', background: '#ea580c', color: '#fff', border: 'none', fontSize: 15 }}>
+          ПОПРОБОВАТЬ СНОВА
+        </button>
+      </div>
+    )
+  }
+}
 
 export default function AdminPage() {
   const [auth, setAuth] = useState(() => sessionStorage.getItem('quiz_admin') === '1')
@@ -231,7 +253,9 @@ function AdminRoundView({ gameState, config, round, teams, answers, refetchAnswe
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
 
       {status === 'show_answers' && config && (
-        <AdminAnswersView gameState={gameState} config={config} answers={answers} onGrade={grade} />
+        <ErrorBoundary>
+          <AdminAnswersView gameState={gameState} config={config} answers={answers} onGrade={grade} />
+        </ErrorBoundary>
       )}
 
       {status === 'answer_time' && round === 3 && (
@@ -419,8 +443,12 @@ function useRatings(roundNumber) {
     if (roundNumber == null) return
     let stop = false
     async function load() {
-      const { data } = await supabase.from('question_ratings')
-        .select('question_ref, rating').eq('round_number', roundNumber)
+      let data = null
+      try {
+        const res = await supabase.from('question_ratings')
+          .select('question_ref, rating').eq('round_number', roundNumber)
+        data = res.data
+      } catch { return }        // таблицы может не быть — молча пропускаем
       if (stop || !data) return
       const acc = {}
       data.forEach(r => {
