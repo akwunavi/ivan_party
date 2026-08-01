@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useGameState } from '../hooks/useGameState'
 import { registerTeam } from '../lib/gameActions'
 import { useTeams } from '../hooks/useTeams'
-import { clearGrading } from '../lib/gameActions'
+import { clearGrading, rateQuestion } from '../lib/gameActions'
 import { ROUND_CONFIGS } from '../lib/roundsRegistry'
 import { useAnswerQueue } from '../lib/answerQueue'
 
@@ -103,6 +103,29 @@ function JeopardyForm({ team, gameState }) {
 // ═══ ФОРМА ОТВЕТОВ ═══
 // Ответы и ставки хранятся локально (переживают перезагрузку телефона)
 // и отправляются в Supabase при каждом изменении.
+// Оценка вопроса игроком: 5 звёзд, тап = оценка, повтор перезаписывает.
+// В Р4 не показывается (там свой быстрый формат плиток).
+function QuestionRating({ teamId, questionRef, round, value, onRate }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, paddingTop: 10, borderTop: '1px solid #1e1e1e' }}>
+      <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#555', letterSpacing: '0.08em' }}>
+        ОЦЕНИ ВОПРОС
+      </span>
+      <div style={{ display: 'flex', gap: 4 }}>
+        {[1, 2, 3, 4, 5].map(n => (
+          <button key={n}
+            onClick={() => { onRate(n); rateQuestion(teamId, questionRef, round, n).catch(() => {}) }}
+            style={{
+              width: 30, height: 30, border: 'none', background: 'transparent',
+              cursor: 'pointer', fontSize: 19, lineHeight: 1, padding: 0,
+              color: value >= n ? '#eab308' : '#333',
+            }}>★</button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // Баннер связи: красный "нет связи" пока офлайн, оранжевый "досылаю N" пока в очереди что-то есть
 function ConnBanner({ isOnline, pendingCount }) {
   if (isOnline && pendingCount === 0) return null
@@ -119,6 +142,16 @@ function AnswerForm({ team, gameState }) {
   const collapsible = round === 3 || round === 5 // ответы спрятаны под шевроном
   const [openIdx, setOpenIdx] = useState(null)
   const { send, pendingCount, isOnline } = useAnswerQueue()
+  const [ratings, setRatings] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(`quiz_ratings_r${round}`) || '{}') } catch { return {} }
+  })
+  function rate(qIdx, n) {
+    setRatings(prev => {
+      const next = { ...prev, [qIdx]: n }
+      localStorage.setItem(`quiz_ratings_r${round}`, JSON.stringify(next))
+      return next
+    })
+  }
 
   // Автораскрытие текущего вопроса: как только ведущий перешёл к вопросу N,
   // шеврон N сам открывается на телефоне. Ответы на ДРУГИХ вопросах (state.answers)
@@ -398,6 +431,10 @@ function AnswerForm({ team, gameState }) {
                       </span>
                     </label>
                   )}
+
+                  {/* Оценка вопроса — во всех раундах кроме Р4 (там свой формат) */}
+                  <QuestionRating teamId={team.id} questionRef={`r${round}-q${i}`}
+                    round={round} value={ratings[i] || 0} onRate={n => rate(i, n)} />
                 </>
               )}
             </div>

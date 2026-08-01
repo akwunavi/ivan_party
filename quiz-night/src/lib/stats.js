@@ -6,15 +6,16 @@ import { ROUND_CONFIGS, TOTAL_ROUNDS } from './roundsRegistry'
 // каждый вопрос + все ответы построчно (для спорных ситуаций).
 
 export async function collectGameStats() {
-  const [{ data: teams }, { data: answers }, { data: scoreLog }] = await Promise.all([
+  const [{ data: teams }, { data: answers }, { data: scoreLog }, { data: ratings }] = await Promise.all([
     supabase.from('teams').select('*'),
     supabase.from('answers').select('*, teams(name)'),
     supabase.from('score_log').select('*'),
+    supabase.from('question_ratings').select('*'),
   ])
-  return buildStats(teams || [], answers || [], scoreLog || [])
+  return buildStats(teams || [], answers || [], scoreLog || [], ratings || [])
 }
 
-export function buildStats(teams, answers, scoreLog) {
+export function buildStats(teams, answers, scoreLog, ratings = []) {
   const teamName = Object.fromEntries(teams.map(t => [t.id, t.name]))
 
   // Баллы по раундам из score_log (боевые раунды)
@@ -40,7 +41,10 @@ export function buildStats(teams, answers, scoreLog) {
       const ref = `r${rn}-q${qi}`
       const qAnswers = answers.filter(a => a.question_ref === ref)
       const correct = qAnswers.filter(a => a.is_correct === true).length
+      const rr = ratings.filter(r => r.question_ref === ref)
       questionStats.push({
+        rating: rr.length ? (rr.reduce((s2, r) => s2 + r.rating, 0) / rr.length) : null,
+        ratingCount: rr.length,
         round: rn,
         ref,
         title: (q.question_text || '').split('\n')[0].slice(0, 60),
@@ -67,9 +71,10 @@ export function buildStats(teams, answers, scoreLog) {
       ].map(esc).join(',')),
     '',
     ['— СВОДКА ПО ВОПРОСАМ —'].map(esc).join(','),
-    ['Раунд', 'Вопрос', 'Текст', 'Ответили', 'Верно', '% команд'].map(esc).join(','),
+    ['Раунд', 'Вопрос', 'Текст', 'Ответили', 'Верно', '% команд', 'Оценка', 'Оценок'].map(esc).join(','),
     ...questionStats.map(qs =>
-      [qs.round, qs.ref, qs.title, qs.answered, qs.correct, `${qs.pct}%`].map(esc).join(',')),
+      [qs.round, qs.ref, qs.title, qs.answered, qs.correct, `${qs.pct}%`,
+       qs.rating != null ? qs.rating.toFixed(1) : '—', qs.ratingCount].map(esc).join(',')),
   ]
   // BOM — чтобы Excel открыл кириллицу без танцев
   const csv = '\uFEFF' + csvRows.join('\n')
@@ -85,7 +90,8 @@ export function buildStats(teams, answers, scoreLog) {
   })
   lines.push('', '📊 Взятие вопросов (% команд):')
   questionStats.forEach(qs => {
-    lines.push(`Р${qs.round} ${qs.ref.split('-')[1]}: ${qs.pct}% — ${qs.title}`)
+    const star = qs.rating != null ? ` · ★${qs.rating.toFixed(1)}` : ''
+    lines.push(`Р${qs.round} ${qs.ref.split('-')[1]}: ${qs.pct}%${star} — ${qs.title}`)
   })
   const tgText = lines.join('\n')
 

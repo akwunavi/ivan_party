@@ -412,12 +412,41 @@ function FinaleAdminPanel() {
   )
 }
 
+// Средние оценки вопросов раунда (обновляются каждые 5 сек)
+function useRatings(roundNumber) {
+  const [avg, setAvg] = useState({})
+  useEffect(() => {
+    if (roundNumber == null) return
+    let stop = false
+    async function load() {
+      const { data } = await supabase.from('question_ratings')
+        .select('question_ref, rating').eq('round_number', roundNumber)
+      if (stop || !data) return
+      const acc = {}
+      data.forEach(r => {
+        acc[r.question_ref] = acc[r.question_ref] || { sum: 0, n: 0 }
+        acc[r.question_ref].sum += r.rating
+        acc[r.question_ref].n += 1
+      })
+      const out = {}
+      Object.entries(acc).forEach(([ref, v]) => { out[ref] = { avg: v.sum / v.n, n: v.n } })
+      setAvg(out)
+    }
+    load()
+    const t = setInterval(load, 5000)
+    return () => { stop = true; clearInterval(t) }
+  }, [roundNumber])
+  return avg
+}
+
 // ═══ П.4: КОМПАКТНЫЙ ЭКРАН ОТВЕТОВ ДЛЯ ТЕЛЕФОНА ВЕДУЩЕГО ═══
 // Без текста вопроса и ответа (ведущий их знает + видит проектор).
 // Только: номер вопроса, ответы команд, крупные кнопки ✓/✗ под каждым.
 function AdminAnswersView({ gameState, config, answers, onGrade }) {
   const step = gameState.current_step
   const total = config.questions.length
+  const ratings = useRatings(config.number)
+  const qRating = ratings[`r${config.number}-q${step}`]
   const teamAnswers = answers.filter(a => a.question_ref === `r${config.number}-q${step}`)
 
   function goNext() {
@@ -438,7 +467,17 @@ function AdminAnswersView({ gameState, config, answers, onGrade }) {
         <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: 20, fontWeight: 700, color: '#ea580c' }}>
           ОТВЕТЫ КОМАНД
         </div>
-        <div style={A.dim}>ВОПРОС {step + 1} / {total}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {qRating && (
+            <span style={{
+              fontFamily: 'Rajdhani, sans-serif', fontSize: 15, fontWeight: 700, color: '#eab308',
+              border: '1px solid #4a3a00', padding: '2px 8px',
+            }}>
+              ★ {qRating.avg.toFixed(1)} <span style={{ color: '#555', fontSize: 12 }}>({qRating.n})</span>
+            </span>
+          )}
+          <div style={A.dim}>ВОПРОС {step + 1} / {total}</div>
+        </div>
       </div>
 
       {teamAnswers.length === 0 && (

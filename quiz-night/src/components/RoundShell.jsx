@@ -321,6 +321,12 @@ export function ShowAnswers({ gameState, config, isAdminView = false, answers = 
   // экрана не начислили баллы дважды. Ручные ✓/✗ — поверх, где угодно.
   useEffect(() => {
     if (!autoGrade || !revealed) return
+    // Сколько длится поэтапное раскрытие ответа (3 сек на элемент)
+    const staged = q?.match_pairs
+      ? (q.media_urls?.length || q.match_pairs.left?.length || 0)
+      : Array.isArray(q?.correct_answer) ? q.correct_answer.length : 0
+    const revealMs = staged > 0 ? staged * 3000 + 500 : 0
+    const gradeTimer = setTimeout(() => {
     teamAnswers.forEach(a => {
       if (a.is_correct != null) return
       const given = a.answer_text?.trim()
@@ -358,6 +364,8 @@ export function ShowAnswers({ gameState, config, isAdminView = false, answers = 
       if (ok === null) return
       grade(a, ok)
     })
+    }, revealMs)
+    return () => clearTimeout(gradeTimer)
   }, [autoGrade, revealed, step, teamAnswers.length])
 
   // Трек-ответ (Р2 «песни в картинках») — только на проекторе

@@ -71,6 +71,15 @@ export async function clearGrading(teamId, questionRef, roundNumber) {
     .eq('id', row.id)
 }
 
+// ═══ ОЦЕНКА ВОПРОСА ИГРОКОМ (1-5) ═══
+export async function rateQuestion(teamId, questionRef, roundNumber, rating) {
+  const { error } = await supabase.from('question_ratings').upsert({
+    team_id: teamId, question_ref: questionRef,
+    round_number: roundNumber, rating, updated_at: new Date().toISOString(),
+  }, { onConflict: 'team_id,question_ref' })
+  if (error) throw error
+}
+
 // Отметить ответ верным/неверным
 export async function markAnswer(answerId, isCorrect, pointsAwarded) {
   const { error } = await supabase

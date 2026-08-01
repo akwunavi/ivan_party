@@ -75,6 +75,7 @@ export const ROUND0 = {
 Б — Английский бульдог
 В — Альпака
 Г — Американский бульдог`,
+voice_audio: '/media/voices/0_6.mp3',
   media_urls: ['/media/ans_r0_5_1.jpg', '/media/ans_r0_5_2.jpg', '/media/ans_r0_5_3.jpg', '/media/ans_r0_5_4.jpg'],
   match_pairs: {
     left: ['1', '2', '3', '4'],
