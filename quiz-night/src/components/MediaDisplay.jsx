@@ -37,17 +37,38 @@ export default function MediaDisplay({ question, showText = true, typewriter = f
   const bigSize   = hasImages ? 'clamp(18px, 2.2vw, 28px)' : 'clamp(40px, 6vw, 96px)'
   const midSize   = hasImages ? 'clamp(16px, 1.9vw, 24px)' : 'clamp(32px, 4.6vw, 72px)'
   const smallSize = hasImages ? 'clamp(14px, 1.6vw, 20px)' : 'clamp(26px, 3.4vw, 52px)'
+  const textRef = useRef(null)
+  const [fitScale, setFitScale] = useState(1)
+  useEffect(() => {
+    setFitScale(1)  // сброс при смене вопроса
+  }, [question_text])
+  useEffect(() => {
+    const el = textRef.current
+    if (!el) return
+    // Подгоняем, пока текст не влезет по высоте в свой блок
+    let scale = 1
+    let guard = 0
+    while (el.scrollHeight > el.clientHeight + 2 && scale > 0.45 && guard < 24) {
+      scale -= 0.06
+      el.style.fontSize = `calc(var(--base-fs) * ${scale})`
+      guard++
+    }
+    if (scale !== 1) setFitScale(scale)
+  }, [question_text, fitScale === 1])
+
   const textStyle = {
     fontFamily: 'Russo One, Rajdhani, sans-serif',
-    fontSize: len <= 70 ? bigSize : len <= 160 ? midSize : smallSize,
+    '--base-fs': len <= 70 ? bigSize : len <= 160 ? midSize : smallSize,
+    fontSize: `calc(var(--base-fs) * ${fitScale})`,
     textAlign: 'center',
     lineHeight: 1.35,
     color: '#fff',
     maxWidth: '86vw',
     letterSpacing: '0.01em',
-    flexShrink: 1,       // П.2: даём тексту сжиматься, а не выпирать на соседние блоки
+    flexShrink: 1,
     minHeight: 0,
-    overflowY: 'auto',   // если совсем не влез — прокрутка внутри своего блока
+    maxHeight: hasImages ? '30vh' : '62vh',  // жёсткий потолок — за экран не уедет
+    overflow: 'hidden',
     whiteSpace: 'pre-line',   // П.3: \n в тексте = перенос строки (описание фильма и т.п.)
   }
 
@@ -60,8 +81,8 @@ export default function MediaDisplay({ question, showText = true, typewriter = f
       {/* ТЕКСТ ВОПРОСА — при первом показе «печатается» */}
       {showText && titleText && (
         typewriter
-          ? <Typewriter text={titleText} style={textStyle} />
-          : <div style={textStyle}>{titleText}</div>
+          ? <Typewriter text={titleText} style={textStyle} innerRef={textRef} />
+          : <div ref={textRef} style={textStyle}>{titleText}</div>
       )}
 
       {/* КАРТИНКИ — сетка занимает всё оставшееся место, никогда не вылезает */}
@@ -77,15 +98,34 @@ export default function MediaDisplay({ question, showText = true, typewriter = f
       {/* Варианты сопоставления (буква — текст) — отдельным аккуратным списком ПОД картинками */}
       {variantLines.length > 0 && (
         <div style={{
-          display: 'flex', flexWrap: 'wrap', gap: '14px 32px', justifyContent: 'center',
-          flexShrink: 0, maxWidth: 1000,
+          display: 'grid',
+          gridTemplateColumns: `repeat(${Math.min(variantLines.length, hasImages ? media_urls.length : 4)}, 1fr)`,
+          gap: 12, flexShrink: 0, width: '100%', maxWidth: '92vw',
         }}>
-          {variantLines.map((line, i) => (
-            <div key={i} style={{
-              fontFamily: 'Rajdhani, sans-serif', fontSize: 'clamp(22px, 2.7vw, 32px)',
-              fontWeight: 700, color: '#ddd',
-            }}>{line}</div>
-          ))}
+          {variantLines.map((line, i) => {
+            const m2 = line.match(/^([А-ЯA-Z])\s*[—\-–]\s*(.+)$/)
+            const key = m2 ? m2[1] : null
+            const text = m2 ? m2[2] : line
+            return (
+              <div key={i} style={{
+                background: '#0d0d0d', border: '1px solid #2a2a2a',
+                borderTop: '3px solid var(--accent)',
+                padding: '12px 14px', display: 'flex', alignItems: 'baseline', gap: 10,
+                minWidth: 0,
+              }}>
+                {key && (
+                  <span style={{
+                    fontFamily: 'Orbitron, monospace', fontWeight: 700,
+                    fontSize: 'clamp(20px, 2.2vw, 32px)', color: 'var(--accent)', flexShrink: 0,
+                  }}>{key}</span>
+                )}
+                <span style={{
+                  fontFamily: 'Rajdhani, sans-serif', fontWeight: 700, color: '#eee',
+                  fontSize: 'clamp(17px, 1.9vw, 27px)', lineHeight: 1.25, overflowWrap: 'anywhere',
+                }}>{text}</span>
+              </div>
+            )
+          })}
         </div>
       )}
 

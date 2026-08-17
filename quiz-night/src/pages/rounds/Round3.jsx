@@ -55,18 +55,18 @@ export const ROUND3 = {
       content_type: 'choice',
       question_text: 'Какую часть тела также называют «атлант»?',
       choices: [
-        { key: 'А', text: 'Головной мозг' },
-        { key: 'Б', text: 'Шестая пара ребер' },
-        { key: 'В', text: 'Шейный позвонок' },
-        { key: 'Г', text: 'Часть плеча' },
+        { key: 'А', text: 'Драпировка' },
+        { key: 'Б', text: 'Деревянная стена' },
+        { key: 'В', text: 'Пейзаж' },
+        { key: 'Г', text: 'Город' },
       ],
       voice_audio: '/media/voices/3_3.mp3',
       correct_choice: 'В',           // ← верный ответ задаёшь тут
-      correct_answer: 'В — Шейный позвонок',
+      correct_answer: 'В — Пейзаж',
     },
             {
       content_type: 'choice',
-      question_text: 'Что названо в честь Святой Троицы?',
+      question_text: 'Что изображено на заднем плане картины Леонардо да Винчи «Мона Лиза»??',
       choices: [
         { key: 'А', text: 'Остров Тринидад' },
         { key: 'Б', text: 'Архипелаг Тристан-да-Кунья' },

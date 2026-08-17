@@ -383,3 +383,11 @@ body {
    но полоса не рисуется — на телевизоре её быть не должно. */
 .grid-bg { scrollbar-width: none; -ms-overflow-style: none; }
 .grid-bg::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+
+/* ═══ Таймер: пульсация в последние 10 секунд ═══ */
+@keyframes timerPulse {
+  0%, 100% { transform: scale(1);    text-shadow: 0 0 18px rgba(239,68,68,0.5); }
+  50%      { transform: scale(1.09); text-shadow: 0 0 34px rgba(239,68,68,0.85); }
+}
+.timer-urgent { animation: timerPulse 1s ease-in-out infinite; display: inline-block; }

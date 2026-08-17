@@ -38,10 +38,10 @@ export default function Timer({ seconds, onComplete, autoStart = false }) {
   const barColor = isLow ? '#ef4444' : '#ea580c'
 
   return (
-    <div style={{ width: '100%', maxWidth: 600 }}>
+    <div style={{ width: '100%', maxWidth: 760 }}>
       {/* Прогресс-бар */}
       <div style={{
-        height: 4, background: '#1a1a1a', borderRadius: 2, overflow: 'hidden', marginBottom: 10
+        height: 7, background: '#1a1a1a', borderRadius: 3, overflow: 'hidden', marginBottom: 14
       }}>
         <div style={{
           height: '100%', width: `${pct}%`,
@@ -54,9 +54,9 @@ export default function Timer({ seconds, onComplete, autoStart = false }) {
       <div style={{
         display: 'flex', justifyContent: 'center', alignItems: 'center'
       }}>
-        <span style={{
+        <span className={isLow ? 'timer-urgent' : ''} style={{
           fontFamily: 'Orbitron, Share Tech Mono, monospace',
-          fontSize: 42, lineHeight: 1, fontWeight: 700,
+          fontSize: 'clamp(64px, 8vw, 130px)', lineHeight: 1, fontWeight: 700,
           color: isLow ? '#ef4444' : '#ea580c',
           transition: 'color 0.5s',
           textShadow: isLow ? '0 0 18px rgba(239,68,68,0.5)' : '0 0 18px rgba(234,88,12,0.4)',

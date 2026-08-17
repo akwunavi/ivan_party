@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 // Текст «печатается» с мигающим курсором — эффект терминала (киберпанк)
-export default function Typewriter({ text, speed = 32, style }) {
+export default function Typewriter({ text, speed = 32, style, innerRef }) {
   const [shown, setShown] = useState(0)
   useEffect(() => {
     setShown(0)
@@ -16,7 +16,7 @@ export default function Typewriter({ text, speed = 32, style }) {
   }, [text])
   const done = shown >= (text?.length ?? 0)
   return (
-    <span style={style}>
+    <span ref={innerRef} style={style}>
       {text?.slice(0, shown)}
       {!done && <span className="tw-cursor" />}
     </span>

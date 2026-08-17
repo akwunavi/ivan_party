@@ -172,10 +172,10 @@ export default function RoundShell({ gameState, config, renderQuestion }) {
             <div className="mono-tag" style={{ fontSize: 16, letterSpacing: '0.25em' }}>
               РАУНД {pad(config.number)}{isRepeat && ' :: ПОВТОР'}
             </div>
-            <div style={{ ...S.counter, fontSize: 20, marginTop: 6 }}>
+            <div style={{ ...S.counter, fontSize: 28, marginTop: 8 }}>
               {isRepeat ? 'ПОВТОР' : 'ВОПРОС'}{' '}
-              <span style={{ color: '#fff', fontFamily: 'Orbitron, monospace', fontSize: 34, fontWeight: 700 }}>{qNumber(config, step).num}</span>
-              <span style={{ color: '#555' }}> / {qNumber(config, step).total}</span>
+              <span style={{ color: '#fff', fontFamily: 'Orbitron, monospace', fontSize: 72, fontWeight: 700, textShadow: '0 0 24px rgba(234,88,12,0.35)' }}>{qNumber(config, step).num}</span>
+              <span style={{ color: '#555', fontSize: 30 }}> / {qNumber(config, step).total}</span>
               {q?.block_number ? <span style={{ color: '#555' }}> · БЛОК {q.block_number}</span> : null}
             </div>
           </div>
