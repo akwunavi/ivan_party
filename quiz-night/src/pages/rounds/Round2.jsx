@@ -22,7 +22,7 @@ export const ROUND2 = {
   questions: [
     { content_type: 'multi_image', question_text: '', media_urls: ['/media/r6.1_1.jpg', '/media/r6.1_2.jpg'], word1: 'бланш', word2: 'лагуна', correct_answer: 'Аншлаг' },
     { content_type: 'multi_image', question_text: '', media_urls: ['/media/r2_2_1.jpg', '/media/r2_2_2.jpg'], word1: 'Динозавр', word2: 'Оракул', correct_answer: 'Аврора' },
-    { content_type: 'multi_image', question_text: '', media_urls: ['/media/r2_3_1.jpg', '/media/r2_3_2.jpg'], word1: 'Байкал', word2: 'Пакля', correct_answer: 'Калпак' },
+    { content_type: 'multi_image', question_text: '', media_urls: ['/media/r2_3_1.jpg', '/media/r2_3_2.jpg'], word1: 'Охрана', word2: 'Насморк', correct_answer: 'Ананас' },
     { content_type: 'multi_image', question_text: '', media_urls: ['/media/r2_4_1.jpg', '/media/r2_4_2.jpg'], word1: 'Ток', word2: 'Сикль', correct_answer: 'Токсик' },
     { content_type: 'multi_image', question_text: '', media_urls: ['/media/r2_5_1.jpg', '/media/r2_5_2.jpg'], word1: 'Сад', word2: 'Иствуд', correct_answer: 'Садист' },
     { content_type: 'multi_image', question_text: '', media_urls: ['/media/r2_6_1.jpg', '/media/r2_6_2.jpg'], word1: 'Молоко', word2: 'Рокуэлл', correct_answer: 'Окорок'},
